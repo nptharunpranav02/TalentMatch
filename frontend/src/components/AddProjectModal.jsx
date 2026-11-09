@@ -1,31 +1,26 @@
 import React, { useState } from "react";
-import { X, Plus, Trash2, FolderPlus } from "lucide-react";
+import { X } from "lucide-react";
 
 export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
   const [name, setName] = useState("");
   const [client, setClient] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("HIGH");
+  const [priority, setPriority] = useState("High");
   const [teamSize, setTeamSize] = useState(3);
   const [minExperienceYears, setMinExperienceYears] = useState(3);
   const [deadline, setDeadline] = useState("2027-05-31");
 
-  // Dynamic required skills
   const [requiredSkills, setRequiredSkills] = useState([
-    { name: "React", minProficiency: 4, weight: 1.0 },
-    { name: "Node.js", minProficiency: 3, weight: 0.8 }
+    { name: "React", minProficiency: 4 },
+    { name: "Node.js", minProficiency: 3 }
   ]);
   const [newSkillName, setNewSkillName] = useState("");
-  const [newSkillProf, setNewSkillProf] = useState(4);
 
   if (!isOpen) return null;
 
   const handleAddSkill = () => {
     if (!newSkillName.trim()) return;
-    setRequiredSkills([
-      ...requiredSkills,
-      { name: newSkillName.trim(), minProficiency: Number(newSkillProf), weight: 1.0 }
-    ]);
+    setRequiredSkills([...requiredSkills, { name: newSkillName.trim(), minProficiency: 3 }]);
     setNewSkillName("");
   };
 
@@ -37,7 +32,7 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
     e.preventDefault();
     if (!name || !client) return;
 
-    const newProject = {
+    onProjectAdded({
       name,
       client,
       description,
@@ -46,201 +41,147 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
       minExperienceYears: Number(minExperienceYears),
       deadline,
       requiredSkills
-    };
-
-    onProjectAdded(newProject);
+    });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <FolderPlus className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Create New Project</h2>
-              <p className="text-xs text-slate-500">Define resource requirements and technical expectations.</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
-          >
-            <X className="h-5 w-5" />
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 flex items-center justify-center p-4">
+      <div className="relative w-full max-w-xl bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden my-8">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h2 className="text-base font-semibold text-slate-900">Create Project</h2>
+          <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Project Name *
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Project Name *</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Real-Time Telemetry Dashboard"
+                placeholder="e.g. Core Banking Migration"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-slate-400"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Client / Account *
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Client *</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Apex Financial Global"
+                placeholder="e.g. Apex Financial"
                 value={client}
                 onChange={(e) => setClient(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-slate-400"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-              Project Description
-            </label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Description</label>
             <textarea
               rows={2}
-              placeholder="Summary of scope, architectural goals, and deliverables..."
+              placeholder="Scope and technical deliverables..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-slate-400"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Priority
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200 bg-white"
               >
-                <option value="CRITICAL">Critical</option>
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Team Size
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Team Size</label>
               <input
                 type="number"
                 min="1"
                 value={teamSize}
                 onChange={(e) => setTeamSize(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Min Exp (Yrs)
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Min Exp (Yrs)</label>
               <input
                 type="number"
                 min="0"
                 step="0.5"
                 value={minExperienceYears}
                 onChange={(e) => setMinExperienceYears(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200"
               />
             </div>
-
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Target Deadline
-              </label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Deadline</label>
               <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-1.5 text-xs rounded-md border border-slate-200"
               />
             </div>
           </div>
 
-          {/* Required Skills Section */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Required Technical Competencies
-            </label>
-
-            <div className="flex flex-wrap gap-2">
+          {/* Required Skills */}
+          <div className="p-3 rounded-md bg-slate-50 border border-slate-100 space-y-2">
+            <label className="block text-xs font-medium text-slate-700">Required Skills</label>
+            <div className="flex flex-wrap gap-1.5">
               {requiredSkills.map((req, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-800 shadow-2xs"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-slate-200 text-xs text-slate-800"
                 >
                   <span>{req.name}</span>
-                  <span className="text-[10px] text-indigo-600 font-mono">Min L{req.minProficiency}/5</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSkill(idx)}
-                    className="text-slate-400 hover:text-rose-500 ml-1"
-                  >
+                  <button type="button" onClick={() => handleRemoveSkill(idx)} className="text-slate-400 hover:text-slate-600">
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
             </div>
-
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="e.g. React, Docker, Python, AWS"
+                placeholder="e.g. React, Python, Docker"
                 value={newSkillName}
                 onChange={(e) => setNewSkillName(e.target.value)}
-                className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-2.5 py-1 text-xs rounded border border-slate-200 bg-white"
               />
-              <select
-                value={newSkillProf}
-                onChange={(e) => setNewSkillProf(e.target.value)}
-                className="px-2 py-1.5 text-xs rounded-lg border border-slate-200 bg-white"
-              >
-                <option value={5}>Min L5 (Expert)</option>
-                <option value={4}>Min L4 (Advanced)</option>
-                <option value={3}>Min L3 (Proficient)</option>
-                <option value={2}>Min L2 (Intermediate)</option>
-              </select>
               <button
                 type="button"
                 onClick={handleAddSkill}
-                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+                className="px-2.5 py-1 rounded bg-slate-800 text-white text-xs font-medium"
               >
-                + Add Skill
+                Add Skill
               </button>
             </div>
           </div>
 
-          {/* Modal Actions */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 rounded"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"
+              className="px-4 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded"
             >
               Create Project
             </button>

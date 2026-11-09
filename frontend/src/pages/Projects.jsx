@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Briefcase, Plus, Sparkles, Users, Calendar, Award, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, Calendar, Users } from "lucide-react";
 
 export default function Projects({ projects, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, OPEN, FULFILLED
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filteredProjects = projects.filter((proj) => {
     const q = searchTerm.toLowerCase();
@@ -18,21 +18,21 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Project Management</h1>
-          <p className="text-sm text-slate-500">
-            Define project tech requirements, staffing targets, and view allocation progress.
+          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Projects</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Active client initiatives, skill demands, and team staffing progress.
           </p>
         </div>
         <button
           onClick={onOpenAddProject}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-all cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer self-start sm:self-auto"
         >
-          <Plus className="h-4 w-4" />
-          Create New Project
+          <Plus className="h-3.5 w-3.5" />
+          New Project
         </button>
       </div>
 
@@ -41,155 +41,134 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
         <div className="relative w-full sm:w-80">
           <input
             type="text"
-            placeholder="Search projects, client, tech stack..."
+            placeholder="Search projects, client, stack..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full px-3 py-1.5 rounded-md border border-slate-200 text-xs focus:outline-none focus:border-slate-400 bg-white"
           />
         </div>
 
-        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-xs font-medium self-start sm:self-auto">
+        <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-xs font-medium">
           <button
             onClick={() => setStatusFilter("ALL")}
-            className={`px-3 py-1.5 rounded-md transition-all ${
-              statusFilter === "ALL" ? "bg-slate-900 text-white font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-2.5 py-1 rounded transition-colors ${
+              statusFilter === "ALL" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            All Projects ({projects.length})
+            All ({projects.length})
           </button>
           <button
             onClick={() => setStatusFilter("OPEN")}
-            className={`px-3 py-1.5 rounded-md transition-all ${
-              statusFilter === "OPEN" ? "bg-indigo-600 text-white font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-2.5 py-1 rounded transition-colors ${
+              statusFilter === "OPEN" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Open / Sourcing ({projects.filter((p) => p.status === "OPEN").length})
+            Open ({projects.filter((p) => p.status === "OPEN").length})
           </button>
           <button
             onClick={() => setStatusFilter("FULFILLED")}
-            className={`px-3 py-1.5 rounded-md transition-all ${
-              statusFilter === "FULFILLED" ? "bg-emerald-600 text-white font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-2.5 py-1 rounded transition-colors ${
+              statusFilter === "FULFILLED" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Fully Staffed ({projects.filter((p) => p.status === "FULFILLED").length})
+            Staffed ({projects.filter((p) => p.status === "FULFILLED").length})
           </button>
         </div>
       </div>
 
       {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filteredProjects.map((proj) => {
           const allocated = proj.allocatedCount || 0;
           const percent = Math.min(Math.round((allocated / proj.teamSize) * 100), 100);
           const isFulfilled = proj.status === "FULFILLED" || allocated >= proj.teamSize;
 
-          const priorityBadge = {
-            CRITICAL: "bg-rose-50 text-rose-700 border-rose-200",
-            HIGH: "bg-amber-50 text-amber-700 border-amber-200",
-            MEDIUM: "bg-blue-50 text-blue-700 border-blue-200",
-            LOW: "bg-slate-100 text-slate-700 border-slate-200"
-          }[proj.priority || "MEDIUM"];
-
           return (
             <div
               key={proj.id}
-              className="rounded-2xl bg-white border border-slate-200 p-6 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+              className="rounded-lg bg-white border border-slate-200 p-5 hover:border-slate-300 transition-colors flex flex-col justify-between"
             >
               <div>
-                {/* Header Row */}
+                {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
-                      {proj.client}
-                    </span>
-                    <h2 className="text-lg font-bold text-slate-900 mt-0.5">{proj.name}</h2>
+                    <span className="text-xs text-slate-500 font-medium">{proj.client}</span>
+                    <h2 className="text-base font-semibold text-slate-900 mt-0.5">{proj.name}</h2>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${priorityBadge}`}
-                    >
-                      {proj.priority || "Standard"}
-                    </span>
-                    {isFulfilled ? (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        Staffed
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Active
+                    {proj.priority === "High" && (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                        High Priority
                       </span>
                     )}
+                    <span
+                      className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+                        isFulfilled
+                          ? "bg-slate-100 text-slate-700 border-slate-200"
+                          : "bg-blue-50 text-blue-700 border-blue-200"
+                      }`}
+                    >
+                      {isFulfilled ? "Filled" : "Hiring"}
+                    </span>
                   </div>
                 </div>
 
-                <p className="mt-3 text-xs text-slate-600 leading-relaxed">{proj.description}</p>
+                <p className="mt-2.5 text-xs text-slate-600 leading-relaxed">{proj.description}</p>
 
-                {/* Team Capacity Progress Bar */}
-                <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                {/* Team Allocation Bar */}
+                <div className="mt-4 p-3 rounded-md bg-slate-50 border border-slate-100">
                   <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-semibold text-slate-700">Team Allocation</span>
-                    <span className="font-bold text-slate-900">
-                      {allocated} / {proj.teamSize} Assigned ({percent}%)
+                    <span className="text-slate-600 font-medium">Team Allocation</span>
+                    <span className="font-semibold text-slate-800">
+                      {allocated} of {proj.teamSize} assigned ({percent}%)
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all duration-500 ${
-                        isFulfilled ? "bg-emerald-500" : "bg-gradient-to-r from-indigo-500 to-violet-600"
+                      className={`h-full transition-all duration-300 ${
+                        isFulfilled ? "bg-slate-700" : "bg-slate-900"
                       }`}
                       style={{ width: `${percent}%` }}
                     ></div>
                   </div>
                 </div>
 
-                {/* Requirements details */}
-                <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <Award className="h-4 w-4 text-indigo-500" />
-                    <span>Min Experience: <strong>{proj.minExperienceYears} Years</strong></span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    <span>Target Date: <strong>{proj.deadline || "TBD"}</strong></span>
-                  </div>
+                {/* Requirements info */}
+                <div className="mt-3.5 flex items-center gap-4 text-xs text-slate-500">
+                  <span>Min Exp: <strong className="text-slate-700 font-medium">{proj.minExperienceYears} yrs</strong></span>
+                  <span>•</span>
+                  <span>Deadline: <strong className="text-slate-700 font-medium">{proj.deadline || "TBD"}</strong></span>
                 </div>
 
-                {/* Required Skills Chips */}
-                <div className="mt-4">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Required Technical Competencies
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                {/* Required Skills */}
+                <div className="mt-3.5">
+                  <p className="text-[11px] text-slate-400 font-medium">Required Stack</p>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {proj.requiredSkills.map((req) => (
                       <span
                         key={req.name}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                        className="px-2 py-0.5 rounded text-xs bg-slate-50 text-slate-700 border border-slate-200"
                       >
-                        <span className="font-semibold">{req.name}</span>
-                        <span className="text-[10px] text-slate-500">
-                          (Min L{req.minProficiency || 3})
-                        </span>
+                        {req.name}
                       </span>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-500">
-                  {isFulfilled ? "No additional resources needed" : `${proj.teamSize - allocated} open seats left`}
+              {/* Action */}
+              <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-400">
+                  {isFulfilled ? "Fully staffed" : `${proj.teamSize - allocated} open spots remaining`}
                 </span>
-
                 <button
                   onClick={() => {
                     setSelectedProjectForMatch(proj.id);
                     setActiveTab("matching");
                   }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                  className="px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer"
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Run AI Match
+                  Match Bench Talent
                 </button>
               </div>
             </div>

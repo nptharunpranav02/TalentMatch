@@ -1,11 +1,8 @@
 import { initialEmployees, initialProjects, initialAllocations } from "./mockData";
 
-// Set to true to use rich mock state with localStorage persistence.
-// Change to false to connect to Member 2's backend API!
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
-// Initialize localStorage if empty
 const loadStorage = (key, fallback) => {
   const data = localStorage.getItem(`talentmatch_${key}`);
   if (!data) {
@@ -24,22 +21,19 @@ const saveStorage = (key, data) => {
 };
 
 // ------------------------------------------------------------
-// Built-in AI Matching & Explanation Engine (Client-side Fallback)
+// Candidate-to-Project Matching Logic
 // ------------------------------------------------------------
 export const calculateMatchScore = (employee, project) => {
-  if (!employee || !project) return { score: 0, explanation: "", matchingSkills: [] };
+  if (!employee || !project) return { score: 0, explanation: "", matchingSkills: [], missingSkills: [] };
 
   const reqSkills = project.requiredSkills || [];
   const empSkills = employee.skills || [];
 
-  let matchedWeight = 0;
-  let totalWeight = 0;
   const matchingSkills = [];
+  const missingSkills = [];
 
+  let skillPoints = 0;
   reqSkills.forEach((req) => {
-    const w = req.weight || 1;
-    totalWeight += w;
-
     const found = empSkills.find(
       (s) => s.name.toLowerCase() === req.name.toLowerCase()
     );
@@ -50,23 +44,26 @@ export const calculateMatchScore = (employee, project) => {
         empProficiency: found.proficiency,
         reqProficiency: req.minProficiency
       });
-      // Ratio of proficiency up to 100%
-      const profScore = Math.min(found.proficiency / (req.minProficiency || 1), 1.2);
-      matchedWeight += w * Math.min(profScore, 1);
+      const ratio = Math.min(found.proficiency / (req.minProficiency || 1), 1.0);
+      skillPoints += ratio;
+    } else {
+      missingSkills.push(req.name);
     }
   });
 
-  const skillScore = totalWeight > 0 ? (matchedWeight / totalWeight) * 60 : 0; // up to 60 pts
+  const skillScore = reqSkills.length > 0 ? (skillPoints / reqSkills.length) * 60 : 0;
 
-  // Experience fit: up to 25 pts
-  const expRatio = Math.min((employee.experienceYears || 0) / (project.minExperienceYears || 1), 1.3);
-  const expScore = Math.min(expRatio * 25, 25);
+  // Experience comparison (up to 25 points)
+  const expNeeded = project.minExperienceYears || 1;
+  const expActual = employee.experienceYears || 0;
+  const expScore = Math.min((expActual / expNeeded) * 25, 25);
 
-  // Career Interest alignment: up to 15 pts
+  // Career Interest alignment (up to 15 points)
   let interestBonus = 0;
-  const projectKeywords = `${project.name} ${project.description}`.toLowerCase();
+  const projectText = `${project.name} ${project.description}`.toLowerCase();
   (employee.careerInterests || []).forEach((interest) => {
-    if (projectKeywords.includes(interest.toLowerCase().split(" ")[0])) {
+    const word = interest.toLowerCase().split(" ")[0];
+    if (word && projectText.includes(word)) {
       interestBonus += 7.5;
     }
   });
@@ -74,39 +71,35 @@ export const calculateMatchScore = (employee, project) => {
 
   const totalScore = Math.round(Math.min(skillScore + expScore + interestBonus, 100));
 
-  // Dynamic AI Explanation Generator
-  let explanation = "";
-  if (totalScore >= 85) {
-    explanation = `Outstanding fit! Matches ${matchingSkills.length}/${reqSkills.length} core technologies. Total experience (${employee.experienceYears}y) fulfills project minimum (${project.minExperienceYears}y). High alignment with career goals.`;
-  } else if (totalScore >= 65) {
-    explanation = `Strong candidate with solid foundations in ${matchingSkills.map(s => s.name).join(", ")}. Quick onboarding will bridge minor requirement gaps.`;
+  // Clean, factual summary
+  const matchedSkillNames = matchingSkills.map((s) => s.name).join(", ");
+  const explanationParts = [];
+
+  if (matchingSkills.length > 0) {
+    explanationParts.push(`Matches ${matchingSkills.length} of ${reqSkills.length} skills (${matchedSkillNames})`);
   } else {
-    explanation = `Moderate candidate. Meets partial skills (${matchingSkills.length}/${reqSkills.length}), but requires mentorship on remaining requirements.`;
+    explanationParts.push("No direct skill overlap");
+  }
+
+  if (expActual >= expNeeded) {
+    explanationParts.push(`${expActual} yrs experience meets project requirement (${expNeeded} yrs)`);
+  } else {
+    explanationParts.push(`${expActual} yrs experience (project asks for ${expNeeded} yrs)`);
+  }
+
+  if (interestBonus > 0) {
+    explanationParts.push("Aligned with stated career goals");
   }
 
   return {
     score: totalScore,
-    explanation,
-    matchingSkills
+    explanation: explanationParts.join(" • "),
+    matchingSkills,
+    missingSkills
   };
 };
 
-// ------------------------------------------------------------
-// API Service Interface (Matches Member 2's Endpoints)
-// ------------------------------------------------------------
 export const api = {
-  // Check backend connectivity status
-  async checkBackendHealth() {
-    if (USE_MOCK) return { connected: false, mode: "MOCK_MODE" };
-    try {
-      const res = await fetch(`${API_BASE_URL}/health`);
-      return { connected: res.ok, mode: "LIVE_API" };
-    } catch {
-      return { connected: false, mode: "MOCK_FALLBACK" };
-    }
-  },
-
-  // 1. Dashboard Stats
   async getDashboardStats() {
     if (USE_MOCK) {
       const employees = loadStorage("employees", initialEmployees);
@@ -130,7 +123,6 @@ export const api = {
     return res.json();
   },
 
-  // 2. Employees API
   async getEmployees() {
     if (USE_MOCK) {
       return loadStorage("employees", initialEmployees);
@@ -161,7 +153,6 @@ export const api = {
     return res.json();
   },
 
-  // 3. Projects API
   async getProjects() {
     if (USE_MOCK) {
       return loadStorage("projects", initialProjects);
@@ -191,7 +182,6 @@ export const api = {
     return res.json();
   },
 
-  // 4. AI Recommendations API
   async getRecommendations(projectId) {
     if (USE_MOCK) {
       const projects = loadStorage("projects", initialProjects);
@@ -199,7 +189,6 @@ export const api = {
       const project = projects.find((p) => p.id === projectId);
       if (!project) return [];
 
-      // Rank all bench employees
       const benchEmployees = employees.filter((e) => e.availabilityStatus === "BENCH");
       const ranked = benchEmployees.map((emp) => {
         const match = calculateMatchScore(emp, project);
@@ -207,18 +196,17 @@ export const api = {
           employee: emp,
           aiMatchScore: match.score,
           aiExplanation: match.explanation,
-          matchingSkills: match.matchingSkills
+          matchingSkills: match.matchingSkills,
+          missingSkills: match.missingSkills
         };
       });
 
-      // Sort descending by match score
       return ranked.sort((a, b) => b.aiMatchScore - a.aiMatchScore);
     }
     const res = await fetch(`${API_BASE_URL}/projects/${projectId}/recommendations`);
     return res.json();
   },
 
-  // 5. Allocations & Approvals API
   async getAllocations() {
     if (USE_MOCK) {
       return loadStorage("allocations", initialAllocations);
@@ -263,7 +251,6 @@ export const api = {
     return res.json();
   },
 
-  // Manager Approval / Rejection endpoint
   async reviewAllocation(allocationId, decision, managerNotes = "") {
     if (USE_MOCK) {
       const allocations = loadStorage("allocations", initialAllocations);
@@ -273,11 +260,10 @@ export const api = {
       const alloc = allocations.find((a) => a.id === allocationId);
       if (!alloc) throw new Error("Allocation not found");
 
-      alloc.status = decision; // "APPROVED" or "REJECTED"
+      alloc.status = decision;
       alloc.reviewedAt = new Date().toISOString();
       alloc.managerNotes = managerNotes;
 
-      // If Approved, update Employee availability & project team count
       if (decision === "APPROVED") {
         const emp = employees.find((e) => e.id === alloc.employeeId);
         if (emp) {
