@@ -21,10 +21,19 @@ const saveStorage = (key, data) => {
 };
 
 // ------------------------------------------------------------
-// Candidate-to-Project Matching Logic
+// Enterprise Candidate-to-Project Matching Engine
+// Multi-factor explainable scoring decomposed into 3 dimensions
 // ------------------------------------------------------------
-export const calculateMatchScore = (employee, project) => {
-  if (!employee || !project) return { score: 0, explanation: "", matchingSkills: [], missingSkills: [] };
+export const calculateMatchScore = (employee, project, customWeights = { skillWeight: 60, experienceWeight: 25, interestWeight: 15 }) => {
+  if (!employee || !project) {
+    return {
+      score: 0,
+      scoreBreakdown: { technicalFit: 0, experienceFit: 0, aspirationFit: 0 },
+      explanation: "",
+      matchingSkills: [],
+      missingSkills: []
+    };
+  }
 
   const reqSkills = project.requiredSkills || [];
   const empSkills = employee.skills || [];
@@ -51,48 +60,57 @@ export const calculateMatchScore = (employee, project) => {
     }
   });
 
-  const skillScore = reqSkills.length > 0 ? (skillPoints / reqSkills.length) * 60 : 0;
+  const technicalFit = reqSkills.length > 0
+    ? Math.round((skillPoints / reqSkills.length) * customWeights.skillWeight)
+    : 0;
 
-  // Experience comparison (up to 25 points)
+  // Seniority & Experience Dimension
   const expNeeded = project.minExperienceYears || 1;
   const expActual = employee.experienceYears || 0;
-  const expScore = Math.min((expActual / expNeeded) * 25, 25);
+  const experienceFit = Math.round(
+    Math.min((expActual / expNeeded) * customWeights.experienceWeight, customWeights.experienceWeight)
+  );
 
-  // Career Interest alignment (up to 15 points)
-  let interestBonus = 0;
-  const projectText = `${project.name} ${project.description}`.toLowerCase();
+  // Career Aspiration & Domain Alignment Dimension
+  let interestPoints = 0;
+  const projectContext = `${project.name} ${project.description} ${project.domain || ""}`.toLowerCase();
   (employee.careerInterests || []).forEach((interest) => {
-    const word = interest.toLowerCase().split(" ")[0];
-    if (word && projectText.includes(word)) {
-      interestBonus += 7.5;
+    const term = interest.toLowerCase().split(" ")[0];
+    if (term && projectContext.includes(term)) {
+      interestPoints += customWeights.interestWeight / 2;
     }
   });
-  interestBonus = Math.min(interestBonus, 15);
+  const aspirationFit = Math.round(Math.min(interestPoints, customWeights.interestWeight));
 
-  const totalScore = Math.round(Math.min(skillScore + expScore + interestBonus, 100));
+  const totalScore = Math.min(technicalFit + experienceFit + aspirationFit, 100);
 
-  // Clean, factual summary
+  // Factual, senior engineering explanation
   const matchedSkillNames = matchingSkills.map((s) => s.name).join(", ");
   const explanationParts = [];
 
   if (matchingSkills.length > 0) {
-    explanationParts.push(`Matches ${matchingSkills.length} of ${reqSkills.length} skills (${matchedSkillNames})`);
+    explanationParts.push(`Coverage: ${matchingSkills.length}/${reqSkills.length} core competencies (${matchedSkillNames})`);
   } else {
     explanationParts.push("No direct skill overlap");
   }
 
   if (expActual >= expNeeded) {
-    explanationParts.push(`${expActual} yrs experience meets project requirement (${expNeeded} yrs)`);
+    explanationParts.push(`${expActual}y verified tenure meets ${expNeeded}y minimum`);
   } else {
-    explanationParts.push(`${expActual} yrs experience (project asks for ${expNeeded} yrs)`);
+    explanationParts.push(`${expActual}y tenure (project seeks ${expNeeded}y)`);
   }
 
-  if (interestBonus > 0) {
-    explanationParts.push("Aligned with stated career goals");
+  if (employee.certifications && employee.certifications.length > 0) {
+    explanationParts.push(`Holds ${employee.certifications[0]}`);
   }
 
   return {
     score: totalScore,
+    scoreBreakdown: {
+      technicalFit,
+      experienceFit,
+      aspirationFit
+    },
     explanation: explanationParts.join(" • "),
     matchingSkills,
     missingSkills
@@ -137,8 +155,10 @@ export const api = {
       const created = {
         ...newEmployee,
         id: `emp-${Date.now()}`,
+        empCode: `TM-${Math.floor(10000 + Math.random() * 90000)}`,
         availabilityStatus: newEmployee.availabilityStatus || "BENCH",
         benchSince: newEmployee.availabilityStatus === "ALLOCATED" ? null : new Date().toISOString().split("T")[0],
+        certifications: newEmployee.certifications || [],
         currentAllocations: []
       };
       employees.unshift(created);
@@ -167,6 +187,7 @@ export const api = {
       const created = {
         ...newProject,
         id: `proj-${Date.now()}`,
+        projectCode: `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
         allocatedCount: 0,
         status: "OPEN"
       };
@@ -182,7 +203,7 @@ export const api = {
     return res.json();
   },
 
-  async getRecommendations(projectId) {
+  async getRecommendations(projectId, customWeights) {
     if (USE_MOCK) {
       const projects = loadStorage("projects", initialProjects);
       const employees = loadStorage("employees", initialEmployees);
@@ -191,10 +212,11 @@ export const api = {
 
       const benchEmployees = employees.filter((e) => e.availabilityStatus === "BENCH");
       const ranked = benchEmployees.map((emp) => {
-        const match = calculateMatchScore(emp, project);
+        const match = calculateMatchScore(emp, project, customWeights);
         return {
           employee: emp,
           aiMatchScore: match.score,
+          scoreBreakdown: match.scoreBreakdown,
           aiExplanation: match.explanation,
           matchingSkills: match.matchingSkills,
           missingSkills: match.missingSkills
@@ -215,7 +237,7 @@ export const api = {
     return res.json();
   },
 
-  async proposeAllocation({ employeeId, projectId, aiMatchScore, aiExplanation }) {
+  async proposeAllocation({ employeeId, projectId, aiMatchScore, scoreBreakdown, aiExplanation }) {
     if (USE_MOCK) {
       const employees = loadStorage("employees", initialEmployees);
       const projects = loadStorage("projects", initialProjects);
@@ -227,11 +249,16 @@ export const api = {
       const newAlloc = {
         id: `alloc-${Date.now()}`,
         employeeId,
+        empCode: employee?.empCode || "TM-XXXXX",
         employeeName: employee?.name || "Unknown",
         employeeRole: employee?.role || "Engineer",
+        employeeBand: employee?.band || "L4",
         projectId,
+        projectCode: project?.projectCode || "PRJ-XXXX",
         projectName: project?.name || "Unknown Project",
+        clientName: project?.client || "Enterprise Client",
         aiMatchScore,
+        scoreBreakdown: scoreBreakdown || { technicalFit: 50, experienceFit: 25, aspirationFit: 15 },
         aiExplanation,
         status: "PENDING_APPROVAL",
         proposedAt: new Date().toISOString(),

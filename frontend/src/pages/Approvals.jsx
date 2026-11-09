@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, ShieldCheck, UserCheck, Calendar, IndianRupee } from "lucide-react";
 import { api } from "../services/api";
 
 export default function Approvals({ allocations, onAllocationReviewed }) {
   const [activeTab, setActiveTab] = useState("PENDING");
   const [notesMap, setNotesMap] = useState({});
+  const [startDateMap, setStartDateMap] = useState({});
   const [processingId, setProcessingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
@@ -19,8 +20,8 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
       const note = notesMap[allocationId] || "";
       await api.reviewAllocation(allocationId, decision, note);
 
-      const decisionText = decision === "APPROVED" ? "Approved" : "Rejected";
-      setToastMessage(`Allocation ${decisionText}. Employee availability updated.`);
+      const decisionText = decision === "APPROVED" ? "Authorized & Staffed" : "Rejected";
+      setToastMessage(`SOW Allocation ${decisionText}. Employee roster & SOW quotas updated.`);
 
       if (onAllocationReviewed) {
         onAllocationReviewed();
@@ -47,13 +48,18 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Allocation Approvals</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Managerial Governance & Sign-off</h1>
+            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              Audit-Ready SOW Approvals
+            </span>
+          </div>
           <p className="text-sm text-slate-500 mt-0.5">
-            Review proposed bench allocations and finalize project assignments.
+            Review AI recommended talent proposals, verify billing rates, and authorize project SOW allocations.
           </p>
         </div>
 
-        {/* Tab Toggle with Natural Amber Highlights */}
+        {/* Tab Toggle */}
         <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-medium shadow-2xs">
           <button
             onClick={() => setActiveTab("PENDING")}
@@ -63,7 +69,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <span>Pending</span>
+            <span>Pending Review</span>
             {pendingAllocations.length > 0 && (
               <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                 {pendingAllocations.length}
@@ -78,7 +84,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            History ({historyAllocations.length})
+            Sign-off Audit History ({historyAllocations.length})
           </button>
         </div>
       </div>
@@ -93,11 +99,11 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
           <p className="text-xs text-slate-500 mt-0.5">
             {activeTab === "PENDING"
               ? "Proposals submitted from the Matching tab will appear here for managerial sign-off."
-              : "Decisions made on allocations will be archived here."}
+              : "Decisions made on allocations will be archived here for compliance auditing."}
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {displayed.map((alloc) => {
             const isPending = alloc.status === "PENDING_APPROVAL";
             const isApproved = alloc.status === "APPROVED";
@@ -106,23 +112,29 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
             return (
               <div
                 key={alloc.id}
-                className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3"
+                className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3.5"
               >
-                {/* Header */}
+                {/* Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-900 text-sm">{alloc.employeeName}</span>
-                      <span className="text-xs text-slate-400">→</span>
-                      <span className="font-semibold text-blue-900 text-sm">{alloc.projectName}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-semibold">
+                        {alloc.empCode || "TM-EMP"}
+                      </span>
+                      <strong className="text-slate-900 text-sm">{alloc.employeeName}</strong>
+                      <span className="text-xs text-slate-400">allocated to</span>
+                      <strong className="text-blue-900 text-sm">{alloc.projectName}</strong>
+                      <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                        {alloc.projectCode || "PRJ-SOW"}
+                      </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Role: {alloc.employeeRole} • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
+                    <p className="text-xs text-slate-500 mt-1">
+                      Candidate Band: <strong className="text-slate-800">{alloc.employeeBand || "L4"}</strong> • Client: <strong className="text-slate-800">{alloc.clientName || "Enterprise Client"}</strong> • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                    <span className="px-2.5 py-1 rounded text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
                       Match: {alloc.aiMatchScore}%
                     </span>
                     {isPending && (
@@ -132,7 +144,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                     )}
                     {isApproved && (
                       <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        Approved
+                        Authorized & Active
                       </span>
                     )}
                     {isRejected && (
@@ -143,23 +155,41 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                   </div>
                 </div>
 
-                {/* Match Summary */}
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-700">
-                  <p className="leading-relaxed">{alloc.aiExplanation}</p>
+                {/* Score Breakdown & Rationale */}
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 space-y-2 text-xs">
+                  {alloc.scoreBreakdown && (
+                    <div className="flex items-center gap-4 text-[11px] text-slate-500 pb-1.5 border-b border-slate-200/60 flex-wrap">
+                      <span>Technical Competency: <strong className="text-slate-900">{alloc.scoreBreakdown.technicalFit}/60</strong></span>
+                      <span>•</span>
+                      <span>Seniority Gate: <strong className="text-slate-900">{alloc.scoreBreakdown.experienceFit}/25</strong></span>
+                      <span>•</span>
+                      <span>Aspiration Fit: <strong className="text-slate-900">{alloc.scoreBreakdown.aspirationFit}/15</strong></span>
+                    </div>
+                  )}
+                  <p className="text-slate-700 leading-relaxed">{alloc.aiExplanation}</p>
                 </div>
 
-                {/* Actions with Natural Colors */}
+                {/* Governance Actions with Date Picker */}
                 {isPending ? (
                   <div className="pt-1 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <input
-                      type="text"
-                      placeholder="Add manager notes or onboarding instructions (optional)..."
-                      value={notesMap[alloc.id] || ""}
-                      onChange={(e) =>
-                        setNotesMap({ ...notesMap, [alloc.id]: e.target.value })
-                      }
-                      className="w-full sm:w-2/3 px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-blue-400 bg-white"
-                    />
+                    <div className="flex items-center gap-2 w-full sm:w-2/3">
+                      <input
+                        type="date"
+                        defaultValue="2026-11-15"
+                        onChange={(e) => setStartDateMap({ ...startDateMap, [alloc.id]: e.target.value })}
+                        className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none"
+                        title="Effective Start Date"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Add manager notes or onboarding instructions (optional)..."
+                        value={notesMap[alloc.id] || ""}
+                        onChange={(e) =>
+                          setNotesMap({ ...notesMap, [alloc.id]: e.target.value })
+                        }
+                        className="flex-1 px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-blue-400 bg-white"
+                      />
+                    </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <button
@@ -174,15 +204,15 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                         onClick={() => handleReview(alloc.id, "APPROVED")}
                         className="px-4 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                       >
-                        Approve Allocation
+                        Authorize SOW Allocation
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 flex items-center justify-between pt-1">
-                    <span>Reviewed: {new Date(alloc.reviewedAt || alloc.proposedAt).toLocaleDateString()}</span>
+                    <span>Authorized on: {new Date(alloc.reviewedAt || alloc.proposedAt).toLocaleDateString()} by Engineering Director</span>
                     {alloc.managerNotes && (
-                      <span className="text-slate-700 font-medium italic">Note: "{alloc.managerNotes}"</span>
+                      <span className="text-slate-700 font-medium italic">Remarks: "{alloc.managerNotes}"</span>
                     )}
                   </div>
                 )}
