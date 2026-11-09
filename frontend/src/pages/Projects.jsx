@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Plus, Search, Calendar, Users, MapPin, DollarSign, IndianRupee } from "lucide-react";
+import { Plus, Search, Calendar, Users, MapPin, DollarSign } from "lucide-react";
 import { getSkillBadgeClass } from "../utils/skillColors";
+import { useOrg } from "../context/OrgContext";
 
 export default function Projects({ projects, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
+  const { formatMoney } = useOrg();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
@@ -150,7 +152,7 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                 <div className="mt-3.5 flex items-center justify-between text-xs text-slate-600 bg-slate-50/70 p-2 rounded-lg border border-slate-100">
                   <span>Min Exp: <strong className="text-slate-900 font-semibold">{proj.minExperienceYears}y tenure</strong></span>
                   <span>Target: <strong className="text-slate-900 font-semibold">{proj.targetBand || "L4+"}</strong></span>
-                  <span>Billing: <strong className="text-blue-900 font-semibold">₹{(proj.monthlyRevenuePerDev / 100000).toFixed(1)}L/dev</strong></span>
+                  <span>Billing: <strong className="text-blue-900 font-semibold">{formatMoney(proj.monthlyRevenuePerDev || 14000)}/dev</strong></span>
                 </div>
 
                 {/* Required Skills */}

@@ -11,6 +11,7 @@ import CandidateDrawer from "./components/CandidateDrawer";
 import CandidateCompareModal from "./components/CandidateCompareModal";
 import CommandPalette from "./components/CommandPalette";
 import { api } from "./services/api";
+import { OrgProvider } from "./context/OrgContext";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -262,7 +263,9 @@ function TalentMatchMain() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <TalentMatchMain />
+      <OrgProvider>
+        <TalentMatchMain />
+      </OrgProvider>
     </ErrorBoundary>
   );
 }

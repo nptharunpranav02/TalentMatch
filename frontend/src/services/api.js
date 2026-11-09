@@ -3,7 +3,7 @@ import { initialEmployees, initialProjects, initialAllocations } from "./mockDat
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
-const STORAGE_VERSION = "v3";
+const STORAGE_VERSION = "v4";
 
 const loadStorage = (key, fallback) => {
   const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;

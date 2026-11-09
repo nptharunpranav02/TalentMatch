@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Check, CheckCircle2, UserCheck, AlertCircle, SlidersHorizontal, ArrowLeftRight, Eye, Sparkles, ShieldCheck, MapPin, Award, Layers } from "lucide-react";
 import { api } from "../services/api";
+import { useOrg } from "../context/OrgContext";
 
 export default function AIMatching({
   projects,
@@ -10,6 +11,7 @@ export default function AIMatching({
   onOpenCandidateDrawer,
   onOpenCompareModal
 }) {
+  const { formatMoney } = useOrg();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [proposedMap, setProposedMap] = useState({});
@@ -221,7 +223,7 @@ export default function AIMatching({
             </div>
             <div>
               <span className="text-[10px] text-slate-400 uppercase block font-semibold">Billing Rate</span>
-              <strong className="text-amber-300 font-bold">₹{(currentProject.monthlyRevenuePerDev / 100000).toFixed(1)}L / mo</strong>
+              <strong className="text-amber-300 font-bold">{formatMoney(currentProject.monthlyRevenuePerDev || 14000)} / mo</strong>
             </div>
           </div>
         </div>

@@ -1,8 +1,10 @@
 import React from "react";
-import { X, Mail, Award, Clock, IndianRupee, ArrowRight, Compass, CheckCircle2, ShieldCheck, MapPin, Briefcase } from "lucide-react";
+import { X, Mail, Award, Clock, ArrowRight, Compass, CheckCircle2, ShieldCheck, MapPin, Briefcase } from "lucide-react";
 import { getSkillBadgeClass } from "../utils/skillColors";
+import { useOrg } from "../context/OrgContext";
 
 export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProject }) {
+  const { formatMoney, currency } = useOrg();
   if (!isOpen || !employee) return null;
 
   const isBench = employee.availabilityStatus === "BENCH";
@@ -14,9 +16,9 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
   };
 
   const benchDays = isBench ? calculateBenchDays(employee.benchSince) : 0;
-  const estimatedDailyCost = 3500; // ₹3,500/day dev idle cost
-  const totalIdleCost = benchDays * estimatedDailyCost;
-  const monthlyBillableRunRate = 450000; // ₹4.5 Lakhs billable revenue recovery
+  const baseDailyCostUSD = 160; 
+  const totalIdleCostUSD = benchDays * baseDailyCostUSD;
+  const monthlyBillableRunRateUSD = 15000;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-2xs flex justify-end">
@@ -43,7 +45,7 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                   {isBench ? "On Bench" : "Allocated"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">{employee.role} • {employee.band} • {employee.department}</p>
+              <p className="text-xs text-slate-500 mt-1">{employee.role} • {employee.band || "Senior"} • {employee.department}</p>
             </div>
             <button
               onClick={onClose}
@@ -67,12 +69,12 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                   </div>
                   <div>
                     <span className="text-slate-500 block">Accrued Idle Overhead</span>
-                    <strong className="text-base font-bold text-rose-700">₹{totalIdleCost.toLocaleString('en-IN')}</strong>
+                    <strong className="text-base font-bold text-rose-700">{formatMoney(totalIdleCostUSD)}</strong>
                   </div>
                 </div>
                 <div className="border-t border-amber-200/60 pt-2 text-xs flex items-center justify-between text-slate-600">
                   <span>Revenue Unlock Potential:</span>
-                  <strong className="text-blue-900 font-bold">₹{(monthlyBillableRunRate / 100000).toFixed(1)}L / month</strong>
+                  <strong className="text-blue-900 font-bold">{formatMoney(monthlyBillableRunRateUSD)} / month</strong>
                 </div>
               </div>
             )}
@@ -88,11 +90,11 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                 <span className="text-slate-500">Base Office</span>
-                <span className="font-semibold text-slate-900">{employee.location}</span>
+                <span className="font-semibold text-slate-900">{employee.location || "Global Remote"}</span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                 <span className="text-slate-500">Seniority Band</span>
-                <span className="font-bold text-blue-900">{employee.band}</span>
+                <span className="font-bold text-blue-900">{employee.band || "L4 / Senior SDE"}</span>
               </div>
               <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                 <span className="text-slate-500">Verified Experience</span>

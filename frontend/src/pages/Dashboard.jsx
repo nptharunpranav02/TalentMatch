@@ -1,6 +1,7 @@
 import React from "react";
-import { Users, Briefcase, CheckSquare, Plus, ArrowRight, IndianRupee, Clock, Sparkles, TrendingUp, ShieldCheck, MapPin, Award } from "lucide-react";
+import { Users, Briefcase, CheckSquare, Plus, ArrowRight, Clock, Sparkles, TrendingUp, ShieldCheck, MapPin, Award, DollarSign } from "lucide-react";
 import { getSkillBadgeClass } from "../utils/skillColors";
+import { useOrg } from "../context/OrgContext";
 
 export default function Dashboard({
   stats,
@@ -13,6 +14,7 @@ export default function Dashboard({
   onOpenAddProject,
   onSelectEmployee
 }) {
+  const { orgName, formatMoney, currency } = useOrg();
   const benchEmployees = employees.filter((e) => e.availabilityStatus === "BENCH");
   const openProjects = projects.filter((p) => p.status === "OPEN");
   const pendingApprovals = allocations.filter((a) => a.status === "PENDING_APPROVAL");
@@ -26,12 +28,10 @@ export default function Dashboard({
   const totalBenchDays = benchEmployees.reduce((acc, emp) => acc + getDaysOnBench(emp.benchSince), 0);
   const avgBenchDays = benchEmployees.length > 0 ? Math.round(totalBenchDays / benchEmployees.length) : 0;
   
-  // Real enterprise metrics in INR
-  const estimatedIdleCostPerDay = 3500; // ₹3,500/day dev idle cost
-  const monthlyBenchRunRate = benchEmployees.length * estimatedIdleCostPerDay * 22; // ₹3.85L / month
-  
-  // Revenue recovery: Average billable billing rate ₹4,50,000 / month per dev
-  const potentialMonthlyRevenueRecovery = benchEmployees.length * 450000;
+  // Base USD amounts converted by formatMoney
+  const baseIdleCostPerDayUSD = 160; 
+  const monthlyBenchRunRateUSD = benchEmployees.length * baseIdleCostPerDayUSD * 22;
+  const potentialMonthlyRevenueRecoveryUSD = benchEmployees.length * 15000;
 
   const agingFresh = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) <= 14).length;
   const agingModerate = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 14 && getDaysOnBench(e.benchSince) <= 30).length;
@@ -43,9 +43,9 @@ export default function Dashboard({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Enterprise Resource Operations</h1>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Workforce Operations & Resource Telemetry</h1>
             <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-              Tier-1 Delivery Center
+              {orgName}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
@@ -66,10 +66,10 @@ export default function Dashboard({
               defaultValue=""
               className="px-3 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-900 text-xs font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="" disabled>⚡ Quick Pitch Scenario...</option>
+              <option value="" disabled>⚡ Quick Demo Scenarios...</option>
               <option value="proj-2">Healthcare AI Diagnostic Pod (High Match)</option>
-              <option value="proj-1">Fintech UPI Banking Engine (Critical)</option>
-              <option value="proj-3">AWS Kubernetes Cloud Migration (DevOps)</option>
+              <option value="proj-1">Fintech UPI Banking Engine (Critical SOW)</option>
+              <option value="proj-3">Multi-Cloud Kubernetes Migration (DevOps)</option>
             </select>
           </div>
 
@@ -90,7 +90,7 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* MAANG-Grade Executive KPI Grid */}
+      {/* Global Executive KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* On Bench Headcount */}
         <div 
@@ -138,17 +138,17 @@ export default function Dashboard({
         <div className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-rose-500 shadow-2xs">
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span className="text-rose-800 font-semibold">Monthly Bench Cost Burn</span>
-            <div className="p-1.5 rounded-lg bg-rose-50 text-rose-700">
-              <IndianRupee className="h-4 w-4" />
+            <div className="p-1.5 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold">
+              {currency.symbol}
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-rose-700">₹{monthlyBenchRunRate.toLocaleString('en-IN')}</span>
+            <span className="text-2xl font-bold text-rose-700">{formatMoney(monthlyBenchRunRateUSD)}</span>
             <span className="text-xs text-rose-800 font-medium bg-rose-100/70 px-1.5 py-0.5 rounded border border-rose-200">
               overhead
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">₹{estimatedIdleCostPerDay.toLocaleString('en-IN')}/day per unassigned engineer</p>
+          <p className="mt-1 text-xs text-slate-500">{formatMoney(baseIdleCostPerDayUSD)}/day per unassigned engineer</p>
         </div>
 
         {/* Billable Revenue Recovery Potential */}
@@ -163,7 +163,7 @@ export default function Dashboard({
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-blue-900">₹{(potentialMonthlyRevenueRecovery / 100000).toFixed(1)} Lakhs</span>
+            <span className="text-2xl font-bold text-blue-900">{formatMoney(potentialMonthlyRevenueRecoveryUSD, { compact: true })}</span>
             <span className="text-xs text-blue-800 font-medium bg-blue-100/70 px-1.5 py-0.5 rounded border border-blue-200">
               / month
             </span>
@@ -180,7 +180,7 @@ export default function Dashboard({
               <Clock className="h-3.5 w-3.5" />
             </div>
             <span className="font-semibold text-slate-900">Workforce Bench Aging Telemetry</span>
-            <span className="text-slate-400 hidden sm:inline">(TCS / Infosys Delivery Model Standard)</span>
+            <span className="text-slate-400 hidden sm:inline">(Global Enterprise Delivery Standard)</span>
           </div>
           <span className="text-xs text-slate-500 font-medium">Total Unallocated: {benchEmployees.length} Engineers</span>
         </div>
@@ -252,14 +252,14 @@ export default function Dashboard({
                       {emp.name}
                     </p>
                     <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px]">
-                      {emp.band || "L4 / SDE-2"}
+                      {emp.band || "L4 / Senior SDE"}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-slate-400" />
-                      <span>{(emp.location || "Bengaluru, India").split(",")[0]}</span>
+                      <span>{(emp.location || "Global Remote").split(",")[0]}</span>
                     </span>
                     <span>•</span>
                     <span>{emp.experienceYears}y exp</span>
@@ -318,6 +318,7 @@ export default function Dashboard({
           <div className="divide-y divide-slate-100">
             {openProjects.slice(0, 4).map((proj) => {
               const unfilled = Math.max(0, proj.teamSize - (proj.allocatedCount || 0));
+              const revenueUSD = proj.monthlyRevenuePerDev || 14000;
               return (
                 <div key={proj.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors">
                   <div className="min-w-0">
@@ -335,7 +336,7 @@ export default function Dashboard({
                         {unfilled} seats open
                       </span>
                       <span>•</span>
-                      <span>₹{((proj.monthlyRevenuePerDev || 420000) / 100000).toFixed(1)}L/dev billing</span>
+                      <span>{formatMoney(revenueUSD)}/dev billing</span>
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">
