@@ -1,0 +1,385 @@
+const mongoose = require("mongoose");
+const checkAllocationCapacity = require("../utils/allocationValidation");
+const Allocation = require("../models/Allocation");
+const Employee = require("../models/Employee");
+const Project = require("../models/Project");
+
+// Check whether two date ranges overlap
+const datesOverlap = (startA, endA, startB, endB) => {
+    return new Date(startA) <= new Date(endB) &&
+        new Date(endA) >= new Date(startB);
+};
+
+// CREATE ALLOCATION REQUEST
+const createAllocation = async (req, res) => {
+    const session = await mongoose.startSession();
+
+    try {
+        const {
+            employee,
+            project,
+            allocationPercentage,
+            startDate,
+            endDate
+        } = req.body;
+
+        if (
+            !mongoose.isValidObjectId(employee) ||
+            !mongoose.isValidObjectId(project)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid employee or project ID"
+            });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const percentage = Number(allocationPercentage);
+
+        if (
+            !startDate ||
+            !endDate ||
+            Number.isNaN(start.getTime()) ||
+            Number.isNaN(end.getTime()) ||
+            start > end ||
+            !Number.isFinite(percentage) ||
+            percentage < 1 ||
+            percentage > 100
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid allocation dates or percentage"
+            });
+        }
+
+        let createdAllocation;
+
+        await session.withTransaction(async () => {
+            const employeeRecord = await Employee.findById(employee).session(session);
+            const projectRecord = await Project.findById(project).session(session);
+
+            if (!employeeRecord || !projectRecord) {
+                const error = new Error("Employee or project not found");
+                error.statusCode = 404;
+                throw error;
+            }
+
+            if (employeeRecord.availability !== "available") {
+                const error = new Error("Employee is unavailable");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (!["planning", "active"].includes(projectRecord.status)) {
+                const error = new Error("Project is not accepting allocations");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            if (
+                start < new Date(projectRecord.startDate) ||
+                end > new Date(projectRecord.endDate)
+            ) {
+                const error = new Error(
+                    "Allocation dates must be within project dates"
+                );
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const capacity = await checkAllocationCapacity({
+                employeeId: employee,
+                projectId: project,
+                startDate: start,
+                endDate: end,
+                percentage,
+                session
+            });
+
+            if (capacity.projectedTeamSize > projectRecord.teamSize) {
+                const error = new Error("Project team size limit reached");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            // These writes serialize competing allocation operations.
+            await Employee.updateOne(
+                { _id: employee },
+                { $inc: { allocationVersion: 1 } },
+                { session }
+            );
+
+            await Project.updateOne(
+                { _id: project },
+                { $inc: { allocationVersion: 1 } },
+                { session }
+            );
+
+            const [allocation] = await Allocation.create([{
+                employee,
+                project,
+                allocationPercentage: percentage,
+                startDate: start,
+                endDate: end,
+                requestedBy: req.user._id,
+                status: "pending"
+            }], { session });
+
+            createdAllocation = allocation;
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Allocation request created",
+            allocation: createdAllocation
+        });
+
+    } catch (error) {
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || "Server error"
+        });
+
+    } finally {
+        await session.endSession();
+    }
+};
+// GET ALL ALLOCATIONS
+const getAllAllocations = async (req, res) => {
+    try {
+        const filter = {};
+
+        if (req.query.status) filter.status = req.query.status;
+        if (req.query.employee) filter.employee = req.query.employee;
+        if (req.query.project) filter.project = req.query.project;
+
+        const allocations = await Allocation.find(filter)
+            .populate("employee", "employeeId name email skills experience")
+            .populate("project", "projectId projectName status")
+            .populate("requestedBy", "name email role")
+            .populate("approvedBy", "name email role")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            totalAllocations: allocations.length,
+            allocations
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+// GET ALLOCATION BY ID
+const getAllocationById = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid allocation ID"
+            });
+        }
+
+        const allocation = await Allocation.findById(req.params.id)
+            .populate("employee", "employeeId name email")
+            .populate("project", "projectId projectName")
+            .populate("requestedBy", "name email")
+            .populate("approvedBy", "name email");
+
+        if (!allocation) {
+            return res.status(404).json({
+                success: false,
+                message: "Allocation not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            allocation
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+// APPROVE ALLOCATION
+const approveAllocation = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid allocation ID"
+            });
+        }
+
+        const allocation = await Allocation.findById(req.params.id);
+
+        if (!allocation) {
+            return res.status(404).json({
+                success: false,
+                message: "Allocation not found"
+            });
+        }
+
+        if (allocation.status !== "pending") {
+            return res.status(400).json({
+                success: false,
+                message: "Only pending allocations can be approved"
+            });
+        }
+
+        // Recheck capacity at approval time
+        const existing = await Allocation.find({
+            _id: { $ne: allocation._id },
+            employee: allocation.employee,
+            status: { $in: ["pending", "approved"] },
+            startDate: { $lte: allocation.endDate },
+            endDate: { $gte: allocation.startDate },
+            excludeAllocationId: allocation._id
+        });
+
+        const total = existing
+            .filter((item) =>
+                datesOverlap(
+                    allocation.startDate,
+                    allocation.endDate,
+                    item.startDate,
+                    item.endDate
+                )
+            )
+            .reduce((sum, item) => sum + item.allocationPercentage, 0);
+
+        if (total + allocation.allocationPercentage > 100) {
+            return res.status(409).json({
+                success: false,
+                message: "Insufficient employee capacity"
+            });
+        }
+
+        allocation.status = "approved";
+        allocation.approvedBy = req.user._id;
+        allocation.approvedAt = new Date();
+        allocation.allocatedAt = new Date();
+
+        await allocation.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Allocation approved",
+            allocation
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+// REJECT ALLOCATION
+const rejectAllocation = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid allocation ID"
+            });
+        }
+
+        const allocation = await Allocation.findById(req.params.id);
+
+        if (!allocation) {
+            return res.status(404).json({
+                success: false,
+                message: "Allocation not found"
+            });
+        }
+
+        if (allocation.status !== "pending") {
+            return res.status(400).json({
+                success: false,
+                message: "Only pending allocations can be rejected"
+            });
+        }
+
+        allocation.status = "rejected";
+        allocation.approvedBy = req.user._id;
+        allocation.approvedAt = new Date();
+
+        await allocation.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Allocation rejected",
+            allocation
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+// CANCEL ALLOCATION
+const cancelAllocation = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid allocation ID"
+            });
+        }
+
+        const allocation = await Allocation.findById(req.params.id);
+
+        if (!allocation) {
+            return res.status(404).json({
+                success: false,
+                message: "Allocation not found"
+            });
+        }
+
+        if (!["pending", "approved"].includes(allocation.status)) {
+            return res.status(400).json({
+                success: false,
+                message: "This allocation cannot be cancelled"
+            });
+        }
+
+        allocation.status = "cancelled";
+        await allocation.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Allocation cancelled",
+            allocation
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+module.exports = {
+    createAllocation,
+    getAllAllocations,
+    getAllocationById,
+    approveAllocation,
+    rejectAllocation,
+    cancelAllocation
+};
