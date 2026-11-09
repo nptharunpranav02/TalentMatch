@@ -12,22 +12,48 @@ An intelligent resource allocation platform that bridges the gap between IT benc
 
 ---
 
-## 🚀 Quick Start (Frontend)
+## 🚀 1-Click Quickstart (Run All 3 Tiers Simultaneously)
 
-To run the frontend locally:
+You can launch the **Frontend (Port 5173)**, **Express Backend (Port 5000)**, and **FastAPI AI Engine (Port 8000)** with a single command from the project root:
 
 ```bash
-# 1. Navigate to the frontend directory
-cd frontend
+# Option A: 1-Command Unified Runner
+npm start
+# or: node run-all.js
 
-# 2. Install dependencies (already installed)
-npm install
+# Option B: Windows 1-Click
+Double-click start_all.bat
 
-# 3. Launch the development server
-npm run dev
+# Option C: Run Automated Integration Verification
+npm run test:fullstack
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+### 🔗 Live URLs
+- 🖥️ **Web Application:** [http://localhost:5173/](http://localhost:5173/)
+- ⚙️ **Backend Health Telemetry:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
+- 🧠 **FastAPI Interactive Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
+
+## 🛠️ Individual Service Commands
+
+If you prefer running services in separate terminal windows:
+
+```bash
+# Terminal 1: AI Engine (FastAPI)
+cd ai-engine
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+# Terminal 2: Backend API (Node.js Express)
+cd backend
+npm install
+npm start
+
+# Terminal 3: Frontend (React + Vite)
+cd frontend
+npm install
+npm run dev
+```
 
 ---
 
