@@ -116,9 +116,11 @@ function TalentMatchMain() {
       employeeId: chosenCandidate.employee.id,
       projectId: compareModalData.project.id,
       aiMatchScore: chosenCandidate.aiMatchScore,
+      scoreBreakdown: chosenCandidate.scoreBreakdown,
       aiExplanation: chosenCandidate.aiExplanation
     }).then(() => {
       loadAllData();
+      setActiveTab("approvals");
     });
   };
 
@@ -169,6 +171,7 @@ function TalentMatchMain() {
         {activeTab === "projects" && (
           <Projects
             projects={projects}
+            employees={employees}
             onOpenAddProject={() => setIsAddProjectOpen(true)}
             setActiveTab={setActiveTab}
             setSelectedProjectForMatch={setSelectedProjectForMatch}

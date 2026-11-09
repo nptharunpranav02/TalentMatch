@@ -106,6 +106,12 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                 <span className="text-slate-500 font-medium">Seniority Band</span>
                 <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">{employee.band || "L4 / Senior SDE"}</span>
               </div>
+              {!isBench && employee.assignedProjectName && (
+                <div className="flex items-center justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500 font-medium">Committed SOW</span>
+                  <span className="font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 max-w-[200px] truncate">{employee.assignedProjectName}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between py-1">
                 <span className="text-slate-500 font-medium">Verified Tenure</span>
                 <span className="font-bold text-slate-900">{employee.experienceYears} Years</span>
