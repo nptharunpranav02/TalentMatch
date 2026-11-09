@@ -86,6 +86,7 @@ export const initialProjects = [
     allocatedCount: 1, // Kenji Takahashi
     assignedEmployeeIds: ["emp-5"],
     status: "OPEN",
+    hiringStatus: "Active Hiring",
     priority: "Critical",
     monthlyRevenuePerDev: 14000,
     startDate: "2026-11-01",
@@ -117,6 +118,7 @@ export const initialProjects = [
     allocatedCount: 1, // Marcus Vance
     assignedEmployeeIds: ["emp-7"],
     status: "OPEN",
+    hiringStatus: "Active Hiring",
     priority: "High",
     monthlyRevenuePerDev: 16000,
     startDate: "2026-10-15",
@@ -149,7 +151,8 @@ export const initialProjects = [
     allocatedCount: 0, // 3 open seats
     assignedEmployeeIds: [],
     status: "OPEN",
-    priority: "High",
+    hiringStatus: "Active Hiring",
+    priority: "Normal",
     monthlyRevenuePerDev: 18000,
     startDate: "2026-11-20",
     deadline: "2027-06-30",
@@ -401,7 +404,7 @@ export const initialAllocations = [
       experienceFit: 25,
       aspirationFit: 13
     },
-    aiExplanation: "Matches 3 of 3 core competencies (Python 5.0/4.0, FastAPI 4.5/3.5, Docker 4.0/3.0). Verified 5.0y tenure exceeds 2.5y project threshold. Direct domain alignment with stated career goals in RAG pipelines and Healthcare AI.",
+    aiExplanation: "Matches 3 of 3 core competencies (Python 5.0/4.0, FastAPI 4.5/3.5, Docker 4.0/3.0). Verified 5.0y experience exceeds 2.5y project threshold. Direct domain alignment with stated career goals in RAG pipelines and Healthcare AI.",
     status: "PENDING_APPROVAL",
     proposedAt: "2026-11-08T10:30:00Z",
     effectiveStartDate: "2026-11-16",

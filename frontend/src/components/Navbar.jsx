@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { 
   Users, Briefcase, Sparkles, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, 
-  Building2, Check, Bell, Settings, User, LogOut, Menu, X, Shield, Clock, ExternalLink 
+  Building2, Check, Bell, Settings, User, LogOut, Menu, X, Shield, Clock, ExternalLink, RefreshCw, CheckCircle2 
 } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
 
-export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette }) {
+export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData }) {
   const { orgName, updateOrgName, currency, currencies, setCurrency } = useOrg();
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -24,7 +24,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
   ];
 
   // 3.5: Enterprise Workforce Alerts
-  const notifications = [
+  const [notificationList, setNotificationList] = useState([
     {
       id: "notif-1",
       title: "Allocation Awaiting Managerial Sign-off",
@@ -70,7 +70,26 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
       actionText: "Fill Capacity",
       unread: false
     }
-  ];
+  ]);
+  const [notificationTab, setNotificationTab] = useState("ALL"); // 'ALL' | 'UNREAD'
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState("Just now");
+
+  const unreadCount = notificationList.filter(n => n.unread).length;
+
+  const handleMarkAllRead = () => {
+    setNotificationList(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
+  const handleRefreshClick = () => {
+    setIsRefreshing(true);
+    if (onRefreshData) onRefreshData();
+    setTimeout(() => {
+      setIsRefreshing(false);
+      const now = new Date();
+      setLastSyncTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }, 400);
+  };
 
   const handleSaveOrg = (e) => {
     e.preventDefault();
@@ -244,49 +263,92 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
 
                 {showNotifications && (
                   <div 
-                    className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-xs animate-in fade-in"
-                    onClick={() => setShowNotifications(false)}
+                    className="absolute right-0 mt-2 w-88 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-xs animate-in fade-in"
                   >
                     <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <Bell className="h-4 w-4 text-blue-600" />
-                        <span className="font-extrabold text-slate-900">Workforce Notifications</span>
+                        <span className="font-extrabold text-slate-900 text-xs">Workforce Notification Center</span>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        3 unread
-                      </span>
-                    </div>
-
-                    <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                      {notifications.map((n) => (
-                        <div 
-                          key={n.id}
-                          onClick={() => setActiveTab(n.targetTab)}
-                          className={`p-3.5 hover:bg-blue-50/50 cursor-pointer transition-colors ${n.unread ? "bg-blue-50/20" : ""}`}
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <strong className="text-slate-900 text-xs font-bold block">{n.title}</strong>
-                            <span className="text-[10px] text-slate-400 whitespace-nowrap">{n.time}</span>
-                          </div>
-                          <p className="text-[11px] text-slate-600 mt-0.5 font-medium leading-relaxed">{n.desc}</p>
-                          {n.actionText && (
-                            <div className="mt-1.5 flex justify-end">
-                              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-0.5 rounded-md border border-blue-200 inline-flex items-center gap-1">
-                                <span>{n.actionText}</span>
-                                <span>→</span>
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                          Mark all as read
+                        </button>
+                      )}
                     </div>
 
-                    <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
-                      <button 
-                        onClick={() => setActiveTab("approvals")}
-                        className="text-xs text-blue-600 font-bold hover:underline"
+                    {/* Filter Tabs */}
+                    <div className="flex items-center border-b border-slate-100 px-3 pt-2 gap-2 text-xs font-bold">
+                      <button
+                        onClick={() => setNotificationTab("ALL")}
+                        className={`pb-1.5 border-b-2 transition-all cursor-pointer ${
+                          notificationTab === "ALL"
+                            ? "border-blue-600 text-blue-600"
+                            : "border-transparent text-slate-500 hover:text-slate-800"
+                        }`}
                       >
-                        View Governance Inbox →
+                        All Alerts ({notificationList.length})
+                      </button>
+                      <button
+                        onClick={() => setNotificationTab("UNREAD")}
+                        className={`pb-1.5 border-b-2 transition-all cursor-pointer flex items-center gap-1 ${
+                          notificationTab === "UNREAD"
+                            ? "border-blue-600 text-blue-600"
+                            : "border-transparent text-slate-500 hover:text-slate-800"
+                        }`}
+                      >
+                        <span>Unread</span>
+                        <span className="px-1.5 py-0.1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                          {unreadCount}
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                      {notificationList
+                        .filter(n => notificationTab === "ALL" || n.unread)
+                        .map((n) => (
+                          <div 
+                            key={n.id}
+                            onClick={() => {
+                              setActiveTab(n.targetTab);
+                              setShowNotifications(false);
+                            }}
+                            className={`p-3.5 hover:bg-blue-50/50 cursor-pointer transition-colors ${n.unread ? "bg-blue-50/25" : ""}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-1.5">
+                                {n.unread && <span className="h-1.5 w-1.5 rounded-full bg-blue-600 shrink-0"></span>}
+                                <strong className="text-slate-900 text-xs font-bold block">{n.title}</strong>
+                              </div>
+                              <span className="text-[10px] text-slate-400 whitespace-nowrap">{n.time}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 mt-1 font-medium leading-relaxed">{n.desc}</p>
+                            {n.actionText && (
+                              <div className="mt-2 flex justify-end">
+                                <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-0.5 rounded-md border border-blue-200 inline-flex items-center gap-1">
+                                  <span>{n.actionText}</span>
+                                  <span>→</span>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+
+                    <div className="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="text-[11px] text-slate-400">Governance Telemetry</span>
+                      <button 
+                        onClick={() => {
+                          setActiveTab("approvals");
+                          setShowNotifications(false);
+                        }}
+                        className="text-xs text-blue-600 font-bold hover:underline cursor-pointer"
+                      >
+                        Approvals Inbox →
                       </button>
                     </div>
                   </div>

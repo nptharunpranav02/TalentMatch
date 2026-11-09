@@ -51,6 +51,10 @@ export default function Dashboard({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Workforce Operations & Resource Telemetry</h1>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Telemetry Synced • Just Now</span>
+            </div>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs">
               {orgName}
             </span>
@@ -425,7 +429,7 @@ export default function Dashboard({
                           {unfilled} seats open
                         </span>
                         <span>•</span>
-                        <span className="font-semibold text-slate-700">{formatMoney(revenueUSD)}/dev billing</span>
+                        <span className="font-semibold text-slate-700">{formatMoney(revenueUSD)} / dev / mo</span>
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 mt-2.5">

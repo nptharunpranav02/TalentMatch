@@ -11,6 +11,7 @@ import CandidateDrawer from "./components/CandidateDrawer";
 import EmployeeDossierModal from "./components/EmployeeDossierModal";
 import CandidateCompareModal from "./components/CandidateCompareModal";
 import CommandPalette from "./components/CommandPalette";
+import ConfirmActionModal from "./components/ConfirmActionModal";
 import { api } from "./services/api";
 import { OrgProvider } from "./context/OrgContext";
 
@@ -73,6 +74,7 @@ function TalentMatchMain() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [drawerEmployee, setDrawerEmployee] = useState(null);
   const [compareModalData, setCompareModalData] = useState(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   const loadAllData = async () => {
     try {
@@ -142,6 +144,7 @@ function TalentMatchMain() {
         setActiveTab={setActiveTab}
         pendingCount={pendingApprovalsCount}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onRefreshData={loadAllData}
       />
 
       {/* Main Content Area */}
@@ -210,7 +213,7 @@ function TalentMatchMain() {
             <span>Press <kbd className="px-1 py-0.5 text-[10px] bg-slate-100 border border-slate-200 rounded font-semibold text-slate-600">Ctrl+K</kbd> for Command Menu</span>
             <span>•</span>
             <button
-              onClick={handleResetData}
+              onClick={() => setIsResetConfirmOpen(true)}
               className="text-slate-500 hover:text-slate-800 underline cursor-pointer"
             >
               Reset Data
@@ -262,6 +265,16 @@ function TalentMatchMain() {
         isOpen={isAddProjectOpen}
         onClose={() => setIsAddProjectOpen(false)}
         onProjectAdded={handleProjectAdded}
+      />
+          {/* 4.11: Confirmation Dialog for Enterprise Reset */}
+      <ConfirmActionModal
+        isOpen={isResetConfirmOpen}
+        onClose={() => setIsResetConfirmOpen(false)}
+        onConfirm={handleResetData}
+        title="Reset Enterprise Telemetry & SOW Data"
+        message="This will clear your local allocations and reload the canonical IT dataset (8 Engineers, 6 Bench, 2 Allocated, 3 SOWs). Are you sure?"
+        confirmText="Reset to Canonical State"
+        variant="warning"
       />
     </div>
   );

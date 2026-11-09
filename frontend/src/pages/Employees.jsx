@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { 
   Search, Plus, Mail, Clock, Briefcase, Eye, LayoutGrid, List, MapPin, 
-  ShieldCheck, Sparkles, CheckCircle2, Filter, X, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw 
+  ShieldCheck, Sparkles, CheckCircle2, Filter, X, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw, Download, CheckSquare2, Square 
 } from "lucide-react";
 import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
 import { getBenchRiskTier } from "../services/mockData";
@@ -53,6 +53,48 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
     if (bandStr.includes("L4")) return 4;
     if (bandStr.includes("L3")) return 3;
     return 1;
+  };
+
+    // 4.10: Bulk Employee Actions & CSV Export
+  const toggleSelectEmployee = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedEmpIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEmpIds.size === filteredEmployees.length) {
+      setSelectedEmpIds(new Set());
+    } else {
+      setSelectedEmpIds(new Set(filteredEmployees.map((e) => e.id)));
+    }
+  };
+
+  const handleExportCSV = () => {
+    const list = selectedEmpIds.size > 0 
+      ? employees.filter((e) => selectedEmpIds.has(e.id))
+      : filteredEmployees;
+    
+    const headers = ["Emp Code,Name,Email,Role,Band,Experience (Yrs),Status,Bench Days,Base Office,Skills,Certifications"];
+    const rows = list.map((e) => {
+      const bDays = e.availabilityStatus === "BENCH" ? getDaysOnBench(e.benchSince) : 0;
+      const skillsStr = `"${(e.skills || []).map((s) => s.name).join("; ")}"`;
+      const certsStr = `"${(e.certifications || []).join("; ")}"`;
+      return `"${e.empCode || ""}",${e.name},${e.email},"${e.role}","${e.band || ""}",${e.experienceYears},"${e.availabilityStatus}",${bDays},"${e.location || ""}",${skillsStr},${certsStr}`;
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `talentmatch_workforce_roster_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const activeFilterCount = (statusFilter !== "ALL" ? 1 : 0) +
@@ -180,7 +222,34 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+          {/* 4.9: Visible Sort By Dropdown */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-500 hidden sm:inline">Sort:</span>
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value)}
+              aria-label="Sort talent directory"
+              className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-2xs cursor-pointer"
+            >
+              <option value="benchDays">Bench Idle (Longest First)</option>
+              <option value="experience">Experience (Highest First)</option>
+              <option value="band">Seniority Band (L6 to L3)</option>
+              <option value="name">Name (A–Z)</option>
+            </select>
+          </div>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCSV}
+            title="Export Workforce Roster to CSV"
+            aria-label="Export talent to CSV"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <Download className="h-3.5 w-3.5 text-blue-600" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+
           {/* Dense Table vs Card View Toggle */}
           <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs shadow-2xs">
             <button
@@ -346,13 +415,13 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
             {/* Experience Range */}
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">Tenure / Exp</label>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Experience Range</label>
               <select
                 value={selectedExpRange}
                 onChange={(e) => setSelectedExpRange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 font-semibold focus:outline-none"
               >
-                <option value="ALL">Any Tenure</option>
+                <option value="ALL">Any Experience</option>
                 <option value="<3">&lt; 3 Years (Associate)</option>
                 <option value="3-5">3–5 Years (Mid-Senior)</option>
                 <option value=">5">&gt; 5 Years (Staff / Principal)</option>
@@ -421,6 +490,15 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
             <table className="w-full text-left text-xs divide-y divide-slate-100 min-w-[750px]">
               <thead className="bg-slate-50/90 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-3.5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={filteredEmployees.length > 0 && selectedEmpIds.size === filteredEmployees.length}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all employees"
+                      className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer h-4 w-4"
+                    />
+                  </th>
                   <th 
                     onClick={() => toggleSort("name")}
                     className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors select-none"
@@ -521,7 +599,7 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
                         <td className="px-5 py-3">
                           <span className="font-bold text-slate-900">{emp.experienceYears}y</span>
-                          <span className="text-[11px] text-slate-400 block">career tenure</span>
+                          <span className="text-[11px] text-slate-400 block">career experience</span>
                         </td>
 
                         <td className="px-5 py-3 text-slate-700 font-medium">
@@ -736,6 +814,41 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
               );
             })
           )}
+        </div>
+      )}
+          {/* 4.10: Enterprise Bulk Action Floating Toolbar */}
+      {selectedEmpIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="h-5 w-5 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center">
+              {selectedEmpIds.size}
+            </span>
+            <span className="font-extrabold text-sm">{selectedEmpIds.size} Engineers Selected</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-700 hidden sm:block"></div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("matching")}
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white transition-all cursor-pointer shadow-sm shadow-blue-400"
+            >
+              Batch AI Match →
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-slate-200 border border-slate-600 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => setSelectedEmpIds(new Set())}
+              className="px-2.5 py-1.5 text-slate-400 hover:text-white font-bold cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CheckCircle2, XCircle, Clock, ShieldCheck, UserCheck, Calendar, ArrowRight, FileCheck, Check, AlertTriangle } from "lucide-react";
 import { api } from "../services/api";
+import ConfirmActionModal from "../components/ConfirmActionModal";
 
 export default function Approvals({ allocations, onAllocationReviewed }) {
   const [activeTab, setActiveTab] = useState("PENDING");
@@ -8,6 +9,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
   const [startDateMap, setStartDateMap] = useState({});
   const [processingId, setProcessingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [rejectConfirmAlloc, setRejectConfirmAlloc] = useState(null);
 
   const pendingAllocations = allocations.filter((a) => a.status === "PENDING_APPROVAL");
   const historyAllocations = allocations.filter((a) => a.status !== "PENDING_APPROVAL");
@@ -199,7 +201,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                     <div className="flex items-center gap-2.5 justify-end">
                       <button
                         disabled={processingId === alloc.id}
-                        onClick={() => handleReview(alloc.id, "REJECTED")}
+                        onClick={() => setRejectConfirmAlloc(alloc)}
                         className="px-4 py-2 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                       >
                         Reject
@@ -229,6 +231,21 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
           })}
         </div>
       )}
+          {/* 4.11: Action Confirmation Modal for Rejections */}
+      <ConfirmActionModal
+        isOpen={Boolean(rejectConfirmAlloc)}
+        onClose={() => setRejectConfirmAlloc(null)}
+        onConfirm={() => {
+          if (rejectConfirmAlloc) {
+            handleReview(rejectConfirmAlloc.id, "REJECTED");
+            setRejectConfirmAlloc(null);
+          }
+        }}
+        title="Decline SOW Allocation Proposal"
+        message={`Are you sure you want to decline the proposed assignment of ${rejectConfirmAlloc?.employeeName} for ${rejectConfirmAlloc?.projectName}? This decision will be stamped in the audit trail.`}
+        confirmText="Confirm Rejection"
+        variant="danger"
+      />
     </div>
   );
 }

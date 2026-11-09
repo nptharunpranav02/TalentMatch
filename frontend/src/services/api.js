@@ -4,7 +4,7 @@ const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
 // Bump to v6 to auto-migrate browser to complete enterprise dossier and upskilling schema
-const STORAGE_VERSION = "v6";
+const STORAGE_VERSION = "v7";
 
 const loadStorage = (key, fallback) => {
   const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;
@@ -154,9 +154,9 @@ export const calculateMatchScore = (
     explanationParts.push(`Coverage: ${matchingSkills.length}/${reqSkills.length} required competencies (${matchingSkills.map((s) => s.name).join(", ")})`);
   }
   if (expActual >= expNeeded) {
-    explanationParts.push(`${expActual}y verified tenure satisfies project threshold (${expNeeded}y)`);
+    explanationParts.push(`${expActual}y verified experience satisfies project threshold (${expNeeded}y)`);
   } else {
-    explanationParts.push(`${expActual}y tenure against ${expNeeded}y target`);
+    explanationParts.push(`${expActual}y experience against ${expNeeded}y target`);
   }
   if (matchedInterests.length > 0) {
     explanationParts.push(`Direct alignment with career focus in ${matchedInterests.join(", ")}`);
@@ -212,8 +212,10 @@ export const api = {
       proj.assignedEmployeeIds = assignedEmps.map((e) => e.id);
       if (proj.allocatedCount >= proj.teamSize) {
         proj.status = "FULFILLED";
+        proj.hiringStatus = "Fully Staffed";
       } else {
         proj.status = "OPEN";
+        proj.hiringStatus = "Active Hiring";
       }
     });
 

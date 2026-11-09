@@ -17,6 +17,7 @@ export default function AIMatching({
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [candidateSort, setCandidateSort] = useState("score"); // "score" | "exp" | "missing"
 
   // Allocation Confirmation Workflow Modal
   const [allocatingCandidate, setAllocatingCandidate] = useState(null);
@@ -214,7 +215,7 @@ export default function AIMatching({
 
           <div className="flex items-center gap-4 sm:gap-6 text-slate-300 flex-wrap">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase block font-bold">Min Tenure</span>
+              <span className="text-[10px] text-slate-400 uppercase block font-bold">Min Experience</span>
               <strong className="text-white font-extrabold">{currentProject.minExperienceYears} Years</strong>
             </div>
             <div>
@@ -230,14 +231,36 @@ export default function AIMatching({
             <div>
               <span className="text-[10px] text-slate-400 uppercase block font-bold">Billing Rate</span>
               <strong className="text-amber-300 font-extrabold">
-                {formatMoney(currentProject.monthlyRevenuePerDev || 14000)} / mo
+                {formatMoney(currentProject.monthlyRevenuePerDev || 14000)} / dev / mo
               </strong>
             </div>
           </div>
         </div>
       )}
 
-      {/* 2.4: Semantic Badge Evaluation Legend */}
+      {/* 4.9: Candidate Sorting Controls & Evaluation Legend */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-slate-50/80 px-4 py-2.5 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-2.5 flex-wrap text-[11px] text-slate-600 font-medium">
+          <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Evaluation Legend:</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Exceeds / Meets Requirement</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Verified Fit</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Upskilling Gap</span>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <span className="text-[11px] font-bold text-slate-500">Sort Candidates:</span>
+          <select
+            value={candidateSort}
+            onChange={(e) => setCandidateSort(e.target.value)}
+            aria-label="Sort candidate recommendations"
+            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-2xs cursor-pointer"
+          >
+            <option value="score">AI Match Score: Highest First</option>
+            <option value="exp">Experience: Senior First</option>
+            <option value="missing">Fewest Missing Skills</option>
+          </select>
+        </div>
+      </div>
       <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50/80 px-4 py-2 rounded-xl border border-slate-200/80 flex-wrap gap-2">
         <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Evaluation Legend:</span>
         <div className="flex items-center gap-3 flex-wrap text-[11px]">
@@ -274,7 +297,11 @@ export default function AIMatching({
         </div>
       ) : (
         <div className="space-y-4">
-          {recommendations.map((item, index) => {
+          {[...recommendations].sort((a, b) => {
+    if (candidateSort === "exp") return (b.employee?.experienceYears || 0) - (a.employee?.experienceYears || 0);
+    if (candidateSort === "missing") return (a.missingSkills?.length || 0) - (b.missingSkills?.length || 0);
+    return b.aiMatchScore - a.aiMatchScore;
+  }).map((item, index) => {
             const {
               employee,
               aiMatchScore,

@@ -27,6 +27,7 @@ export default function Projects({
   const [selectedPriority, setSelectedPriority] = useState("ALL");
   const [selectedClient, setSelectedClient] = useState("ALL");
   const [selectedExpFilter, setSelectedExpFilter] = useState("ALL");
+  const [sortField, setSortField] = useState("priority"); // "priority" | "unfilled" | "exp" | "billing"
 
   // 2.6: Expandable Project Descriptions
   const [expandedDescMap, setExpandedDescMap] = useState({});
@@ -110,6 +111,30 @@ export default function Projects({
     selectedClient,
     selectedExpFilter
   ]);
+
+    // 4.9: Sorting implementation for Project SOWs
+  const sortedProjects = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => {
+      const getPriorityRank = (p) => (p === "Critical" ? 3 : p === "High" ? 2 : 1);
+      const getUnfilled = (proj) => {
+        const alloc = (employees || []).filter(e => e.assignedProjectId === proj.id && e.availabilityStatus === "ALLOCATED").length;
+        return Math.max(0, proj.teamSize - alloc);
+      };
+
+      switch (sortField) {
+        case "priority":
+          return getPriorityRank(b.priority) - getPriorityRank(a.priority);
+        case "unfilled":
+          return getUnfilled(b) - getUnfilled(a);
+        case "exp":
+          return (b.minExperienceYears || 0) - (a.minExperienceYears || 0);
+        case "billing":
+          return (b.monthlyRevenuePerDev || 14000) - (a.monthlyRevenuePerDev || 14000);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredProjects, sortField, employees]);
 
   return (
     <div className="space-y-6">
@@ -301,9 +326,35 @@ export default function Projects({
         )}
       </div>
 
+            {/* 4.8: Semantic Badge Color Legend & 4.9: Visible Sorting Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-slate-50/80 px-4 py-2.5 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-2.5 flex-wrap text-[11px] text-slate-600 font-medium">
+          <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Semantics:</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500"></span> Required Competency</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500"></span> Critical Priority</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500"></span> High Priority</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500"></span> Active Hiring</span>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+          <span className="text-[11px] font-bold text-slate-500">Sort SOWs:</span>
+          <select
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value)}
+            aria-label="Sort projects"
+            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-2xs cursor-pointer"
+          >
+            <option value="priority">Priority: Critical First</option>
+            <option value="unfilled">Open Vacancies: Most Unfilled</option>
+            <option value="exp">Min Experience: Senior First</option>
+            <option value="billing">Billing Rate: Highest First</option>
+          </select>
+        </div>
+      </div>
+
       {/* 2.5: Compact, Shorter Project Cards with Clean Vertical Padding */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredProjects.length === 0 ? (
+        {sortedProjects.length === 0 ? (
           <div className="col-span-full p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 space-y-3">
             <FolderOpen className="h-10 w-10 text-slate-300 mx-auto" />
             <div>
@@ -322,7 +373,7 @@ export default function Projects({
             </button>
           </div>
         ) : (
-          filteredProjects.map((proj) => {
+          sortedProjects.map((proj) => {
             const assignedList = (employees || []).filter(
               (e) => e.assignedProjectId === proj.id && e.availabilityStatus === "ALLOCATED"
             );
@@ -423,10 +474,10 @@ export default function Projects({
                   <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                        Min Tenure
+                        Min Experience
                       </span>
                       <strong className="text-slate-900 font-bold text-[11px]">
-                        {proj.minExperienceYears}y exp
+                        {proj.minExperienceYears}y min exp
                       </strong>
                     </div>
                     <div>
@@ -439,10 +490,10 @@ export default function Projects({
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-bold block">
-                        Billing Rate
+                        Billing Unit ($/dev/mo)
                       </span>
                       <strong className="text-blue-700 font-bold text-[11px]">
-                        {formatMoney(proj.monthlyRevenuePerDev || 14000)}/mo
+                        {formatMoney(proj.monthlyRevenuePerDev || 14000)} / dev / mo
                       </strong>
                     </div>
                   </div>

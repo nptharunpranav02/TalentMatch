@@ -126,10 +126,12 @@ export default function ProjectDetailModal({
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
                 <span className="text-slate-400 font-bold block text-[10px] uppercase">Current Run-rate</span>
                 <strong className="text-lg font-black text-blue-700">{formatMoney(totalMonthlyRunRateUSD)} / mo</strong>
+                <span className="text-[10px] text-slate-400 font-medium block">({allocatedCount} active engineer{allocatedCount === 1 ? "" : "s"})</span>
               </div>
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
                 <span className="text-slate-400 font-bold block text-[10px] uppercase">Target Quota Potential</span>
                 <strong className="text-lg font-black text-slate-800">{formatMoney(totalMaxRunRateUSD)} / mo</strong>
+                <span className="text-[10px] text-slate-400 font-medium block">(at {teamSize} devs quota)</span>
               </div>
             </div>
           </div>
@@ -151,7 +153,7 @@ export default function ProjectDetailModal({
                 Required Technical Competencies & Target Levels
               </span>
               <span className="text-xs font-bold text-slate-500">
-                Min Threshold: {project.minExperienceYears}y exp • Target Band: {project.targetBand || "L4+"}
+                Rate: {formatMoney(project.monthlyRevenuePerDev || 14000)} / dev / month • Min Threshold: {project.minExperienceYears}y exp • Target Band: {project.targetBand || "L4+"}
               </span>
             </div>
 
