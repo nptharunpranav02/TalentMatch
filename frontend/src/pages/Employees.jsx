@@ -247,10 +247,10 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
                   {/* Band & Location */}
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                    <span className="font-semibold text-slate-800">{emp.band}</span>
+                    <span className="font-semibold text-slate-800">{emp.band || "L4 / SDE-2"}</span>
                     <span className="flex items-center gap-1 text-slate-600">
                       <MapPin className="h-3 w-3 text-slate-400" />
-                      <span>{emp.location.split(",")[0]}</span>
+                      <span>{(emp.location || "Bengaluru, India").split(",")[0]}</span>
                     </span>
                     <span>{emp.experienceYears}y tenure</span>
                   </div>

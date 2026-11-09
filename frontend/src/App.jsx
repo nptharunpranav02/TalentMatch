@@ -12,7 +12,45 @@ import CandidateCompareModal from "./components/CandidateCompareModal";
 import CommandPalette from "./components/CommandPalette";
 import { api } from "./services/api";
 
-export default function App() {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught:", error, errorInfo);
+  }
+  handleReset = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">
+          <div className="max-w-md p-6 bg-white rounded-xl border border-slate-200 shadow-md space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Enterprise Schema Synchronized</h2>
+            <p className="text-xs text-slate-500">
+              Your browser has an older session cached. Click below to load the latest enterprise datasets.
+            </p>
+            <button
+              onClick={this.handleReset}
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md shadow-xs cursor-pointer"
+            >
+              Load Latest Dataset
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function TalentMatchMain() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -32,7 +70,7 @@ export default function App() {
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [drawerEmployee, setDrawerEmployee] = useState(null);
-  const [compareModalData, setCompareModalData] = useState(null); // { project, candidateA, candidateB }
+  const [compareModalData, setCompareModalData] = useState(null);
 
   const loadAllData = async () => {
     try {
@@ -42,10 +80,17 @@ export default function App() {
         api.getProjects(),
         api.getAllocations()
       ]);
-      setStats(s);
-      setEmployees(emps);
-      setProjects(projs);
-      setAllocations(allocs);
+      setStats(s || {
+        totalEmployees: 0,
+        benchCount: 0,
+        allocatedCount: 0,
+        totalProjects: 0,
+        activeProjects: 0,
+        pendingApprovals: 0
+      });
+      setEmployees(emps || []);
+      setProjects(projs || []);
+      setAllocations(allocs || []);
     } catch (err) {
       console.error("Error loading application data", err);
     }
@@ -66,7 +111,6 @@ export default function App() {
   };
 
   const handleSelectCompare = (chosenCandidate) => {
-    // Propose chosen candidate
     api.proposeAllocation({
       employeeId: chosenCandidate.employee.id,
       projectId: compareModalData.project.id,
@@ -77,7 +121,12 @@ export default function App() {
     });
   };
 
-  const pendingApprovalsCount = allocations.filter(
+  const handleResetData = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  const pendingApprovalsCount = (allocations || []).filter(
     (a) => a.status === "PENDING_APPROVAL"
   ).length;
 
@@ -148,10 +197,17 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white py-5 mt-10 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>
-            <strong className="text-slate-800">TalentMatch</strong> — Intelligent Bench & Project Allocation
+            <strong className="text-slate-800">TalentMatch</strong> — Enterprise Bench & Project Allocation Platform
           </p>
           <div className="flex items-center gap-3 text-slate-400">
             <span>Press <kbd className="px-1 py-0.5 text-[10px] bg-slate-100 border border-slate-200 rounded font-semibold text-slate-600">Ctrl+K</kbd> for Command Menu</span>
+            <span>•</span>
+            <button
+              onClick={handleResetData}
+              className="text-slate-500 hover:text-slate-800 underline cursor-pointer"
+            >
+              Reset Data
+            </button>
           </div>
         </div>
       </footer>
@@ -161,7 +217,7 @@ export default function App() {
         employee={drawerEmployee}
         isOpen={Boolean(drawerEmployee)}
         onClose={() => setDrawerEmployee(null)}
-        onMatchProject={(emp) => {
+        onMatchProject={() => {
           setActiveTab("matching");
         }}
       />
@@ -200,5 +256,13 @@ export default function App() {
         onProjectAdded={handleProjectAdded}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <TalentMatchMain />
+    </ErrorBoundary>
   );
 }

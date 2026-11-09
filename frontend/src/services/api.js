@@ -3,10 +3,13 @@ import { initialEmployees, initialProjects, initialAllocations } from "./mockDat
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
+const STORAGE_VERSION = "v3";
+
 const loadStorage = (key, fallback) => {
-  const data = localStorage.getItem(`talentmatch_${key}`);
+  const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;
+  const data = localStorage.getItem(storageKey);
   if (!data) {
-    localStorage.setItem(`talentmatch_${key}`, JSON.stringify(fallback));
+    localStorage.setItem(storageKey, JSON.stringify(fallback));
     return fallback;
   }
   try {
@@ -17,7 +20,7 @@ const loadStorage = (key, fallback) => {
 };
 
 const saveStorage = (key, data) => {
-  localStorage.setItem(`talentmatch_${key}`, JSON.stringify(data));
+  localStorage.setItem(`talentmatch_${STORAGE_VERSION}_${key}`, JSON.stringify(data));
 };
 
 // ------------------------------------------------------------

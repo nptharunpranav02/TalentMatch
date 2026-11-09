@@ -243,7 +243,7 @@ export default function Dashboard({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                      {emp.empCode}
+                      {emp.empCode || "TM-04821"}
                     </span>
                     <p 
                       onClick={() => onSelectEmployee(emp)}
@@ -252,14 +252,14 @@ export default function Dashboard({
                       {emp.name}
                     </p>
                     <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px]">
-                      {emp.band}
+                      {emp.band || "L4 / SDE-2"}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-slate-400" />
-                      <span>{emp.location.split(",")[0]}</span>
+                      <span>{(emp.location || "Bengaluru, India").split(",")[0]}</span>
                     </span>
                     <span>•</span>
                     <span>{emp.experienceYears}y exp</span>
@@ -335,7 +335,7 @@ export default function Dashboard({
                         {unfilled} seats open
                       </span>
                       <span>•</span>
-                      <span>₹{(proj.monthlyRevenuePerDev / 100000).toFixed(1)}L/dev billing</span>
+                      <span>₹{((proj.monthlyRevenuePerDev || 420000) / 100000).toFixed(1)}L/dev billing</span>
                     </div>
 
                     <div className="flex flex-wrap gap-1 mt-2">

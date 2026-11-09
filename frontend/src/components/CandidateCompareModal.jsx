@@ -110,7 +110,7 @@ export default function CandidateCompareModal({
                 }}
                 className="w-full mt-4 py-2 px-3 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
-                Select & Propose {empA.name.split(" ")[0]}
+                Select & Propose {(empA?.name || "Candidate").split(" ")[0]}
               </button>
             </div>
 
@@ -184,7 +184,7 @@ export default function CandidateCompareModal({
                 }}
                 className="w-full mt-4 py-2 px-3 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
               >
-                Select & Propose {empB.name.split(" ")[0]}
+                Select & Propose {(empB?.name || "Candidate").split(" ")[0]}
               </button>
             </div>
           </div>
