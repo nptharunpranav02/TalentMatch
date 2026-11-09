@@ -23,6 +23,7 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
   // Table Sorting States (Requirement 2.8)
   const [sortField, setSortField] = useState("benchDays"); // 'name' | 'experience' | 'benchDays' | 'band' | 'status'
   const [sortDirection, setSortDirection] = useState("desc");
+  const [selectedEmpIds, setSelectedEmpIds] = useState(new Set());
 
   // Extract unique filter dropdown values
   const allSkills = useMemo(() => {
@@ -569,6 +570,15 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
                     return (
                       <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors">
+                        <td className="px-4 py-3 w-10">
+                          <input
+                            type="checkbox"
+                            checked={selectedEmpIds.has(emp.id)}
+                            onChange={(e) => toggleSelectEmployee(emp.id, e)}
+                            aria-label={`Select ${emp.name}`}
+                            className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer h-4 w-4"
+                          />
+                        </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
                             <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs ${avatar.bg} ${avatar.text} ${avatar.border} border shadow-2xs shrink-0`}>
@@ -682,6 +692,13 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
                     {/* Card Header */}
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={selectedEmpIds.has(emp.id)}
+                          onChange={(e) => toggleSelectEmployee(emp.id, e)}
+                          aria-label={`Select ${emp.name}`}
+                          className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer h-4 w-4 mt-2.5"
+                        />
                         <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-extrabold text-xs ${avatar.bg} ${avatar.text} ${avatar.border} border shadow-2xs shrink-0`}>
                           {initials}
                         </div>

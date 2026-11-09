@@ -1,3 +1,4 @@
+import QuickDemoBar from "./components/QuickDemoBar";
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
@@ -166,6 +167,16 @@ function TalentMatchMain() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
+        {/* Universal Evaluation & Testing Suite */}
+        <QuickDemoBar
+          onSelectProjectForMatch={(projId) => {
+            setSelectedProjectForMatch(projId);
+            setActiveTab("matching");
+          }}
+          setActiveTab={setActiveTab}
+          onRefreshData={loadAllData}
+          onResetData={handleResetData}
+        />
         {activeTab === "dashboard" && (
           <Dashboard
             stats={stats}
