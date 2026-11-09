@@ -517,14 +517,37 @@ export default function Projects({
                 </div>
 
                 {/* 2.5: Aligned Action Footer */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <button
-                    onClick={() => setSelectedProjectDetail(proj)}
-                    className="text-slate-600 hover:text-blue-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <Eye className="h-3.5 w-3.5 text-blue-500" />
-                    <span>SOW Details</span>
-                  </button>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      onClick={() => setSelectedProjectDetail(proj)}
+                      className="text-slate-600 hover:text-blue-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                      title="View SOW Details"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-blue-500" />
+                      <span>SOW Details</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditProject && onEditProject(proj);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 font-bold text-xs px-2 py-0.5 rounded hover:bg-blue-50 cursor-pointer"
+                      title="Edit Project Requirements"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteProject && onDeleteProject(proj);
+                      }}
+                      className="text-rose-500 hover:text-rose-700 font-bold text-xs px-2 py-0.5 rounded hover:bg-rose-50 cursor-pointer"
+                      title="Delete Project"
+                    >
+                      Delete
+                    </button>
+                  </div>
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-slate-500 hidden sm:inline">

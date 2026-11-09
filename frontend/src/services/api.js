@@ -31,19 +31,34 @@ const saveStorage = (key, data) => {
 // 2. Seniority & Experience Threshold (default 25%)
 // 3. Domain & Career Aspiration Vector (default 15%)
 // ------------------------------------------------------------
+// TalentMatch AI - Deterministic Multi-Vector Matching Engine
+// Decomposed into 4 Explainable Vectors:
+// 1. Technical Skill Compatibility: 40%
+// 2. Experience Compatibility: 25%
+// 3. Availability: 20%
+// 4. Career Interest Alignment: 15%
+// Hard Eligibility Gates:
+// - Employee must be available (on bench)
+// - Mandatory skills must meet project's minimum proficiency
+// - Minimum experience must be satisfied
+// - Seniority requirements validated
+// ------------------------------------------------------------
 export const calculateMatchScore = (
   employee,
   project,
-  customWeights = { skillWeight: 60, experienceWeight: 25, interestWeight: 15 }
+  customWeights = { skillWeight: 40, experienceWeight: 25, availabilityWeight: 20, interestWeight: 15 }
 ) => {
   if (!employee || !project) {
     return {
       score: 0,
-      scoreBreakdown: { technicalFit: 0, experienceFit: 0, aspirationFit: 0 },
+      isEligible: false,
+      eligibilityReasons: ["Invalid employee or project record"],
+      scoreBreakdown: { technicalFit: 0, experienceFit: 0, availabilityFit: 0, aspirationFit: 0 },
       explanation: "",
       skillComparison: [],
       matchingSkills: [],
       missingSkills: [],
+      weakerSkills: [],
       experienceComparison: { required: 0, actual: 0, delta: 0, meetsThreshold: false },
       availabilityComparison: { status: "UNKNOWN", daysOnBench: 0, isReady: false },
       aspirationComparison: { matchedInterests: [], domainAligned: false }
@@ -56,6 +71,8 @@ export const calculateMatchScore = (
   const skillComparison = [];
   const matchingSkills = [];
   const missingSkills = [];
+  const weakerSkills = [];
+  const eligibilityReasons = [];
 
   let skillPoints = 0;
   reqSkills.forEach((req) => {
@@ -76,11 +93,19 @@ export const calculateMatchScore = (
         ratio
       });
 
-      matchingSkills.push({
-        name: found.name,
-        empProficiency: found.proficiency,
-        reqProficiency: req.minProficiency
-      });
+      if (found.proficiency >= req.minProficiency) {
+        matchingSkills.push({
+          name: found.name,
+          empProficiency: found.proficiency,
+          reqProficiency: req.minProficiency
+        });
+      } else {
+        weakerSkills.push({
+          name: found.name,
+          empProficiency: found.proficiency,
+          reqProficiency: req.minProficiency
+        });
+      }
 
       skillPoints += ratio;
     } else {
@@ -95,16 +120,16 @@ export const calculateMatchScore = (
     }
   });
 
+  // 1. Technical Skill Score (40% default)
   const technicalFit = reqSkills.length > 0
-    ? Math.round((skillPoints / reqSkills.length) * customWeights.skillWeight)
+    ? Math.round((skillPoints / reqSkills.length) * (customWeights.skillWeight || 40))
     : 0;
 
-  // 2. Seniority & Experience Dimension
+  // 2. Experience Compatibility (25% default)
   const expNeeded = project.minExperienceYears || 1;
   const expActual = employee.experienceYears || 0;
-  const expRatio = Math.min(expActual / expNeeded, 1.25);
   const experienceFit = Math.round(
-    Math.min((expActual / expNeeded) * customWeights.experienceWeight, customWeights.experienceWeight)
+    Math.min((expActual / expNeeded) * (customWeights.experienceWeight || 25), (customWeights.experienceWeight || 25))
   );
 
   const experienceComparison = {
@@ -114,20 +139,21 @@ export const calculateMatchScore = (
     meetsThreshold: expActual >= expNeeded
   };
 
-  // 3. Availability Dimension
+  // 3. Availability Dimension (20% default)
   const isBench = employee.availabilityStatus === "BENCH";
   let daysOnBench = 0;
   if (employee.benchSince) {
     daysOnBench = Math.max(1, Math.floor((new Date() - new Date(employee.benchSince)) / (1000 * 60 * 60 * 24)));
   }
 
+  const availabilityFit = isBench ? (customWeights.availabilityWeight || 20) : 0;
   const availabilityComparison = {
     status: employee.availabilityStatus,
     daysOnBench,
     isReady: isBench
   };
 
-  // 4. Career Aspiration & Domain Alignment Dimension
+  // 4. Career Aspiration & Domain Alignment (15% default)
   let interestPoints = 0;
   const matchedInterests = [];
   const projectContext = `${project.name} ${project.description} ${project.domain || ""}`.toLowerCase();
@@ -135,38 +161,53 @@ export const calculateMatchScore = (
   (employee.careerInterests || []).forEach((interest) => {
     const term = interest.toLowerCase().split(" ")[0];
     if (term && projectContext.includes(term)) {
-      interestPoints += customWeights.interestWeight / 2;
+      interestPoints += (customWeights.interestWeight || 15) / 2;
       matchedInterests.push(interest);
     }
   });
 
-  const aspirationFit = Math.round(Math.min(interestPoints, customWeights.interestWeight));
+  const aspirationFit = Math.round(Math.min(interestPoints, (customWeights.interestWeight || 15)));
   const aspirationComparison = {
     matchedInterests,
     domainAligned: matchedInterests.length > 0
   };
 
-  const totalScore = Math.min(technicalFit + experienceFit + aspirationFit, 100);
+  // Normalized Overall Score (out of 100)
+  const totalScore = Math.min(technicalFit + experienceFit + availabilityFit + aspirationFit, 100);
+
+  // HARD ELIGIBILITY CHECKS
+  if (!isBench) {
+    eligibilityReasons.push(`Not Available on Bench (Current status: ${employee.availabilityStatus})`);
+  }
+  if (missingSkills.length > 0) {
+    eligibilityReasons.push(`Missing mandatory skill${missingSkills.length > 1 ? "s" : ""}: ${missingSkills.join(", ")}`);
+  }
+  if (weakerSkills.length > 0) {
+    eligibilityReasons.push(`Skill proficiency gap${weakerSkills.length > 1 ? "s" : ""}: ${weakerSkills.map(w => `${w.name} (L${w.empProficiency} < L${w.reqProficiency})`).join(", ")}`);
+  }
+  if (expActual < expNeeded) {
+    eligibilityReasons.push(`Experience threshold not met (${expActual}y available vs ${expNeeded}y minimum required)`);
+  }
+
+  const isEligible = eligibilityReasons.length === 0;
 
   // Transparent, explainable rationale
   const explanationParts = [];
-  if (matchingSkills.length > 0) {
-    explanationParts.push(`Coverage: ${matchingSkills.length}/${reqSkills.length} required competencies (${matchingSkills.map((s) => s.name).join(", ")})`);
-  }
-  if (expActual >= expNeeded) {
-    explanationParts.push(`${expActual}y verified experience satisfies project threshold (${expNeeded}y)`);
+  if (isEligible) {
+    explanationParts.push(`Fully Eligible: Satisfies all ${reqSkills.length} mandatory competencies with ${expActual}y experience`);
   } else {
-    explanationParts.push(`${expActual}y experience against ${expNeeded}y target`);
+    explanationParts.push(`Skill / Eligibility Gap: ${eligibilityReasons[0]}`);
+  }
+  if (matchingSkills.length > 0) {
+    explanationParts.push(`Verified mastery in ${matchingSkills.map((s) => s.name).join(", ")}`);
   }
   if (matchedInterests.length > 0) {
-    explanationParts.push(`Direct alignment with career focus in ${matchedInterests.join(", ")}`);
-  }
-  if (missingSkills.length > 0) {
-    explanationParts.push(`Skill gap: ${missingSkills.join(", ")} (upskilling required)`);
+    explanationParts.push(`Domain interest alignment in ${matchedInterests.join(", ")}`);
   }
 
-  // Requirement 3.4: Upskilling & Skill Gap Analysis Plan
-  const upskillingPlan = missingSkills.map((skillName) => {
+  // Upskilling Plan for Gaps
+  const gapSkills = [...missingSkills, ...weakerSkills.map(w => w.name)];
+  const upskillingPlan = gapSkills.map((skillName) => {
     const key = skillName.toLowerCase();
     const course = upskillingCourses[key] || {
       title: `${skillName} Enterprise Accelerator Certification`,
@@ -181,15 +222,19 @@ export const calculateMatchScore = (
 
   return {
     score: totalScore,
+    isEligible,
+    eligibilityReasons,
     scoreBreakdown: {
       technicalFit,
       experienceFit,
+      availabilityFit,
       aspirationFit
     },
     explanation: explanationParts.join(" • "),
     skillComparison,
     matchingSkills,
     missingSkills,
+    weakerSkills,
     upskillingPlan,
     experienceComparison,
     availabilityComparison,
@@ -312,6 +357,97 @@ export const api = {
     return res.json();
   },
 
+  async updateEmployee(updatedEmployee) {
+    if (USE_MOCK) {
+      const employees = loadStorage("employees", initialEmployees);
+      const index = employees.findIndex((e) => e.id === updatedEmployee.id);
+      if (index !== -1) {
+        employees[index] = { ...employees[index], ...updatedEmployee };
+        saveStorage("employees", employees);
+        await this.reconcileData();
+        return employees[index];
+      }
+      return null;
+    }
+    const res = await fetch(`${API_BASE_URL}/employees/${updatedEmployee.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedEmployee)
+    });
+    return res.json();
+  },
+
+  async deleteEmployee(employeeId) {
+    if (USE_MOCK) {
+      const employees = loadStorage("employees", initialEmployees);
+      const emp = employees.find((e) => e.id === employeeId);
+      if (!emp) throw new Error("Employee not found");
+      if (emp.availabilityStatus === "ALLOCATED") {
+        throw new Error(`Cannot delete ${emp.name} while actively allocated to ${emp.assignedProjectName || "a project"}. Unassign or deallocate first.`);
+      }
+      const filtered = employees.filter((e) => e.id !== employeeId);
+      saveStorage("employees", filtered);
+      await this.reconcileData();
+      return { success: true };
+    }
+    const res = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
+      method: "DELETE"
+    });
+    return res.json();
+  },
+
+  async updateProject(updatedProject) {
+    if (USE_MOCK) {
+      const projects = loadStorage("projects", initialProjects);
+      const index = projects.findIndex((p) => p.id === updatedProject.id);
+      if (index !== -1) {
+        projects[index] = { ...projects[index], ...updatedProject };
+        saveStorage("projects", projects);
+        await this.reconcileData();
+        return projects[index];
+      }
+      return null;
+    }
+    const res = await fetch(`${API_BASE_URL}/projects/${updatedProject.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedProject)
+    });
+    return res.json();
+  },
+
+  async deleteProject(projectId) {
+    if (USE_MOCK) {
+      const projects = loadStorage("projects", initialProjects);
+      const employees = loadStorage("employees", initialEmployees);
+      const allocations = loadStorage("allocations", initialAllocations);
+
+      // De-allocate any employees assigned to this project back to bench
+      employees.forEach((emp) => {
+        if (emp.assignedProjectId === projectId) {
+          emp.availabilityStatus = "BENCH";
+          emp.assignedProjectId = null;
+          emp.assignedProjectName = null;
+          emp.benchSince = new Date().toISOString().split("T")[0];
+        }
+      });
+
+      const filteredProjects = projects.filter((p) => p.id !== projectId);
+      const filteredAllocations = allocations.filter((a) => a.projectId !== projectId);
+
+      saveStorage("employees", employees);
+      saveStorage("projects", filteredProjects);
+      saveStorage("allocations", filteredAllocations);
+      await this.reconcileData();
+      return { success: true };
+    }
+    const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+      method: "DELETE"
+    });
+    return res.json();
+  },
+
+
   // AI Matching Workspace Recommendations
   async getRecommendations(projectId, customWeights) {
     if (USE_MOCK) {
@@ -321,10 +457,8 @@ export const api = {
       const project = projects.find((p) => p.id === projectId);
       if (!project) return [];
 
-      // Rank all bench employees (also flag any pending approvals)
-      const benchEmployees = employees.filter((e) => e.availabilityStatus === "BENCH");
-
-      const ranked = benchEmployees.map((emp) => {
+      // Rank all employees and partition into Eligible vs Skill Gaps
+      const evaluated = employees.map((emp) => {
         const match = calculateMatchScore(emp, project, customWeights);
         const pendingAlloc = allocations.find(
           (a) => a.employeeId === emp.id && a.projectId === projectId && a.status === "PENDING_APPROVAL"
@@ -332,12 +466,15 @@ export const api = {
 
         return {
           employee: emp,
+          isEligible: match.isEligible,
+          eligibilityReasons: match.eligibilityReasons,
           aiMatchScore: match.score,
           scoreBreakdown: match.scoreBreakdown,
           aiExplanation: match.explanation,
           skillComparison: match.skillComparison,
           matchingSkills: match.matchingSkills,
           missingSkills: match.missingSkills,
+          weakerSkills: match.weakerSkills,
           upskillingPlan: match.upskillingPlan,
           experienceComparison: match.experienceComparison,
           availabilityComparison: match.availabilityComparison,
@@ -347,7 +484,19 @@ export const api = {
         };
       });
 
-      return ranked.sort((a, b) => b.aiMatchScore - a.aiMatchScore);
+      const eligible = evaluated
+        .filter((c) => c.isEligible && c.employee.availabilityStatus === "BENCH")
+        .sort((a, b) => b.aiMatchScore - a.aiMatchScore);
+
+      const skillGaps = evaluated
+        .filter((c) => !c.isEligible || c.employee.availabilityStatus !== "BENCH")
+        .sort((a, b) => b.aiMatchScore - a.aiMatchScore);
+
+      // Return unified array with partition metadata
+      const all = [...eligible, ...skillGaps];
+      all.eligible = eligible;
+      all.skillGaps = skillGaps;
+      return all;
     }
     const res = await fetch(`${API_BASE_URL}/projects/${projectId}/recommendations`);
     return res.json();

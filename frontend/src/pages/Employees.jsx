@@ -6,7 +6,7 @@ import {
 import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
 import { getBenchRiskTier } from "../services/mockData";
 
-export default function Employees({ employees, onOpenAddEmployee, setActiveTab, onSelectEmployee }) {
+export default function Employees({ employees, onOpenAddEmployee, setActiveTab, onSelectEmployee, onEditEmployee, onDeleteEmployee }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -653,12 +653,35 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
                         </td>
 
                         <td className="px-5 py-3 text-right">
-                          <button
-                            onClick={() => onSelectEmployee && onSelectEmployee(emp)}
-                            className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                          >
-                            Inspect
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => onSelectEmployee && onSelectEmployee(emp)}
+                              className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                              title="View full employee dossier"
+                            >
+                              Dossier
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditEmployee && onEditEmployee(emp);
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all cursor-pointer"
+                              title="Edit Employee"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteEmployee && onDeleteEmployee(emp);
+                              }}
+                              className="px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer"
+                              title="Delete Employee"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -804,24 +827,47 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
                   </div>
 
                   {/* Card Action Footer */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <button
-                      onClick={() => onSelectEmployee && onSelectEmployee(emp)}
-                      className="text-slate-600 hover:text-blue-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-blue-500" />
-                      <span>Dossier</span>
-                    </button>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        onClick={() => onSelectEmployee && onSelectEmployee(emp)}
+                        className="text-slate-600 hover:text-blue-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        title="View Full Dossier"
+                      >
+                        <Eye className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Dossier</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditEmployee && onEditEmployee(emp);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-bold text-xs px-2 py-0.5 rounded hover:bg-blue-50 cursor-pointer"
+                        title="Edit Employee Profile"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteEmployee && onDeleteEmployee(emp);
+                        }}
+                        className="text-rose-500 hover:text-rose-700 font-bold text-xs px-2 py-0.5 rounded hover:bg-rose-50 cursor-pointer"
+                        title="Delete Employee"
+                      >
+                        Delete
+                      </button>
+                    </div>
 
                     {isBench ? (
                       <button
                         onClick={() => setActiveTab("matching")}
-                        className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer border border-blue-200"
+                        className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer border border-blue-200 shrink-0"
                       >
                         Find Project →
                       </button>
                     ) : (
-                      <span className="text-emerald-800 font-bold text-xs flex items-center gap-1">
+                      <span className="text-emerald-800 font-bold text-xs flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                         <span>Staffed</span>
                       </span>

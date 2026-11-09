@@ -1,4 +1,8 @@
-import QuickDemoBar from "./components/QuickDemoBar";
+import EditEmployeeModal from "./components/EditEmployeeModal";
+import EditProjectModal from "./components/EditProjectModal";
+import DemoTestingDrawer from "./components/DemoTestingDrawer";
+import WorkflowNavigationHub from "./components/WorkflowNavigationHub";
+import Analytics from "./pages/Analytics";
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
@@ -91,8 +95,12 @@ function TalentMatchMain() {
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [drawerEmployee, setDrawerEmployee] = useState(null);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null); // { type: 'employee'|'project', data }
   const [compareModalData, setCompareModalData] = useState(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isDemoDrawerOpen, setIsDemoDrawerOpen] = useState(false);
 
   const loadAllData = async () => {
     try {
@@ -163,20 +171,19 @@ function TalentMatchMain() {
         pendingCount={pendingApprovalsCount}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onRefreshData={loadAllData}
+        onOpenDemoDrawer={() => setIsDemoDrawerOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
-        {/* Universal Evaluation & Testing Suite */}
-        <QuickDemoBar
-          onSelectProjectForMatch={(projId) => {
-            setSelectedProjectForMatch(projId);
-            setActiveTab("matching");
-          }}
+        {/* Redesigned Workflow Navigation Hub (Exact User Specification) */}
+        <WorkflowNavigationHub
+          activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onRefreshData={loadAllData}
-          onResetData={handleResetData}
+          pendingCount={pendingApprovalsCount}
         />
+
+        
         {activeTab === "dashboard" && (
           <Dashboard
             stats={stats}
@@ -198,6 +205,8 @@ function TalentMatchMain() {
             onOpenAddEmployee={() => setIsAddEmployeeOpen(true)}
             setActiveTab={setActiveTab}
             onSelectEmployee={(emp) => setDrawerEmployee(emp)}
+            onEditEmployee={(emp) => setEditingEmployee(emp)}
+            onDeleteEmployee={(emp) => setDeleteConfirmTarget({ type: "employee", data: emp })}
           />
         )}
 
@@ -209,6 +218,8 @@ function TalentMatchMain() {
             setActiveTab={setActiveTab}
             setSelectedProjectForMatch={setSelectedProjectForMatch}
             onSelectEmployee={(emp) => setDrawerEmployee(emp)}
+            onEditProject={(proj) => setEditingProject(proj)}
+            onDeleteProject={(proj) => setDeleteConfirmTarget({ type: "project", data: proj })}
           />
         )}
 
@@ -227,6 +238,15 @@ function TalentMatchMain() {
           <Approvals
             allocations={allocations}
             onAllocationReviewed={loadAllData}
+          />
+        )}
+
+        {activeTab === "analytics" && (
+          <Analytics
+            stats={stats}
+            employees={employees}
+            projects={projects}
+            allocations={allocations}
           />
         )}
       </main>
@@ -294,6 +314,44 @@ function TalentMatchMain() {
         onClose={() => setIsAddProjectOpen(false)}
         onProjectAdded={handleProjectAdded}
       />
+
+      {/* Edit Employee Modal */}
+      <EditEmployeeModal
+        isOpen={Boolean(editingEmployee)}
+        onClose={() => setEditingEmployee(null)}
+        employee={editingEmployee}
+        onSaveEmployee={handleSaveEmployee}
+      />
+
+      {/* Edit Project Modal */}
+      <EditProjectModal
+        isOpen={Boolean(editingProject)}
+        onClose={() => setEditingProject(null)}
+        project={editingProject}
+        onSaveProject={handleSaveProject}
+      />
+
+      {/* Generic Delete Confirmation Modal */}
+      <ConfirmActionModal
+        isOpen={Boolean(deleteConfirmTarget)}
+        onClose={() => setDeleteConfirmTarget(null)}
+        onConfirm={() => {
+          if (deleteConfirmTarget?.type === "employee") {
+            handleDeleteEmployee(deleteConfirmTarget.data);
+          } else if (deleteConfirmTarget?.type === "project") {
+            handleDeleteProject(deleteConfirmTarget.data);
+          }
+          setDeleteConfirmTarget(null);
+        }}
+        title={deleteConfirmTarget?.type === "employee" ? "Delete Employee Record" : "Delete Project SOW"}
+        message={
+          deleteConfirmTarget?.type === "employee"
+            ? `Are you sure you want to permanently delete ${deleteConfirmTarget?.data?.name} (${deleteConfirmTarget?.data?.empCode}) from the workforce talent directory?`
+            : `Are you sure you want to delete ${deleteConfirmTarget?.data?.name} (${deleteConfirmTarget?.data?.projectCode})? Any allocated engineers will be returned to the bench.`
+        }
+        confirmText="Confirm Delete"
+        variant="danger"
+      />
           {/* 4.11: Confirmation Dialog for Enterprise Reset */}
       <ConfirmActionModal
         isOpen={isResetConfirmOpen}
@@ -303,6 +361,19 @@ function TalentMatchMain() {
         message="This will clear your local allocations and reload the canonical IT dataset (8 Engineers, 6 Bench, 2 Allocated, 3 SOWs). Are you sure?"
         confirmText="Reset to Canonical State"
         variant="warning"
+      />
+
+      {/* Developer & Demo Testing Drawer (Separate Evaluation Area) */}
+      <DemoTestingDrawer
+        isOpen={isDemoDrawerOpen}
+        onClose={() => setIsDemoDrawerOpen(false)}
+        onSelectProjectForMatch={(projId) => {
+          setSelectedProjectForMatch(projId);
+          setActiveTab("matching");
+        }}
+        setActiveTab={setActiveTab}
+        onRefreshData={loadAllData}
+        onResetData={handleResetData}
       />
     </div>
   );

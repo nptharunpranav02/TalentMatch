@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { 
   Users, Briefcase, Sparkles, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, 
-  Building2, Check, Bell, Settings, User, LogOut, Menu, X, Shield, Clock, ExternalLink, RefreshCw, CheckCircle2 
+  Building2, Check, Bell, Settings, User, LogOut, Menu, X, Shield, Clock, ExternalLink, RefreshCw, CheckCircle2, TrendingUp 
 } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
 
-export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData }) {
+export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData, onOpenDemoDrawer }) {
   const { orgName, updateOrgName, currency, currencies, setCurrency } = useOrg();
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -19,8 +19,9 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
     { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
     { id: "employees", label: "Employees", icon: Users },
     { id: "projects", label: "Projects", icon: Briefcase },
-    { id: "matching", label: "AI Workspace", icon: Sparkles },
-    { id: "approvals", label: "Approvals", icon: CheckSquare, badge: pendingCount }
+    { id: "matching", label: "AI Matching", icon: Sparkles },
+    { id: "approvals", label: "Approvals", icon: CheckSquare, badge: pendingCount },
+    { id: "analytics", label: "Analytics", icon: TrendingUp }
   ];
 
   // 3.5: Enterprise Workforce Alerts
@@ -206,16 +207,15 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
 
             {/* Right Action Icons: Currency + Notifications + Profile + Mobile Hamburger */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Full-Stack Status Pill */}
-              <div 
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shadow-2xs"
-                title="Frontend connected to Express Backend (port 5000) & FastAPI AI Engine (port 8000)"
+              {/* Separate Developer/Demo Testing Area Trigger */}
+              <button
+                onClick={onOpenDemoDrawer}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer shadow-2xs"
+                title="Open Developer & Demo Testing Suite"
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Node:5000</span>
-                <span className="text-emerald-400">•</span>
-                <span>FastAPI:8000</span>
-              </div>
+                <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>Demo Suite</span>
+              </button>
 
               {/* Global Currency Switcher */}
               <div className="relative hidden sm:block">

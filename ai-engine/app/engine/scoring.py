@@ -13,10 +13,10 @@ from app.models.schemas import ScoreBreakdown
 # SCORING WEIGHTS
 # ==========================================
 
-SKILL_WEIGHT = 0.50
-EXPERIENCE_WEIGHT = 0.20
+SKILL_WEIGHT = 0.40
+EXPERIENCE_WEIGHT = 0.25
 AVAILABILITY_WEIGHT = 0.20
-INTEREST_WEIGHT = 0.10
+INTEREST_WEIGHT = 0.15
 
 
 # ==========================================
