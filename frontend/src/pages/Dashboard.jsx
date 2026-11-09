@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, Briefcase, CheckSquare, Plus, ArrowRight, DollarSign, Clock, Sparkles } from "lucide-react";
+import { Users, Briefcase, CheckSquare, Plus, ArrowRight, IndianRupee, Clock, Sparkles } from "lucide-react";
 import { getSkillBadgeClass } from "../utils/skillColors";
 
 export default function Dashboard({
@@ -25,7 +25,7 @@ export default function Dashboard({
 
   const totalBenchDays = benchEmployees.reduce((acc, emp) => acc + getDaysOnBench(emp.benchSince), 0);
   const avgBenchDays = benchEmployees.length > 0 ? Math.round(totalBenchDays / benchEmployees.length) : 0;
-  const estimatedIdleCostPerDay = 150;
+  const estimatedIdleCostPerDay = 3500; // ₹3,500/day standard dev idle cost in INR
   const monthlyBenchRunRate = benchEmployees.length * estimatedIdleCostPerDay * 22;
 
   const agingFresh = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) <= 14).length;
@@ -132,16 +132,16 @@ export default function Dashboard({
           <p className="mt-1 text-xs text-slate-500">Currently sourcing engineers</p>
         </div>
 
-        {/* Monthly Bench Idle Cost - Terracotta / Rose */}
+        {/* Monthly Bench Idle Cost - Terracotta / Rose in INR */}
         <div className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-rose-500 shadow-2xs">
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span className="text-rose-800 font-semibold">Monthly Bench Cost</span>
             <div className="p-1.5 rounded-lg bg-rose-50 text-rose-700">
-              <DollarSign className="h-4 w-4" />
+              <IndianRupee className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-rose-700">${monthlyBenchRunRate.toLocaleString()}</span>
+            <span className="text-2xl font-bold text-rose-700">₹{monthlyBenchRunRate.toLocaleString('en-IN')}</span>
             <span className="text-xs text-rose-800 font-medium bg-rose-100/70 px-1.5 py-0.5 rounded border border-rose-200">
               idle overhead
             </span>

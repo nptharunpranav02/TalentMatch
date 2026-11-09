@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Mail, Award, Clock, DollarSign, ArrowRight, Compass, CheckCircle2 } from "lucide-react";
+import { X, Mail, Award, Clock, IndianRupee, ArrowRight, Compass, CheckCircle2 } from "lucide-react";
 import { getSkillBadgeClass } from "../utils/skillColors";
 
 export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProject }) {
@@ -14,7 +14,7 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
   };
 
   const benchDays = isBench ? calculateBenchDays(employee.benchSince) : 0;
-  const estimatedDailyCost = 150;
+  const estimatedDailyCost = 3500; // ₹3,500/day dev idle cost in INR
   const totalIdleCost = benchDays * estimatedDailyCost;
 
   return (
@@ -63,7 +63,7 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                   </div>
                   <div>
                     <span className="text-slate-500 block">Estimated Idle Cost</span>
-                    <strong className="text-base font-bold text-rose-700">${totalIdleCost.toLocaleString()}</strong>
+                    <strong className="text-base font-bold text-rose-700">₹{totalIdleCost.toLocaleString('en-IN')}</strong>
                   </div>
                 </div>
                 <p className="text-[11px] text-amber-950/80 border-t border-amber-200/60 pt-2">
