@@ -156,11 +156,14 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Band: <strong className="text-indigo-700">{alloc.employeeBand || "L4"}</strong> • Client: <strong className="text-slate-800">{alloc.clientName || "Enterprise Client"}</strong> • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
+                      Band: <strong className="text-indigo-700">{alloc.employeeBand || "L4"}</strong> • Client: <strong className="text-slate-800">{alloc.clientName || "Enterprise Client"}</strong> • Capacity: <strong className="text-blue-700">{alloc.allocationPercentage || 100}% FTE</strong> • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2.5 self-start lg:self-auto">
+                    <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200 shadow-2xs">
+                      {alloc.allocationPercentage || 100}% SOW
+                    </span>
                     <span className="px-3 py-1 rounded-xl text-xs font-black bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs">
                       Match: {alloc.aiMatchScore}%
                     </span>

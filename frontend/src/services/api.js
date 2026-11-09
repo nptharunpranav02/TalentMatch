@@ -1,10 +1,12 @@
 import { initialEmployees, initialProjects, initialAllocations, upskillingCourses } from "./mockData";
+import { findSemanticSkillMatch } from "./semanticSkills";
+import { liveSync } from "./websocket";
 
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
-// Bump to v6 to auto-migrate browser to complete enterprise dossier and upskilling schema
-const STORAGE_VERSION = "v8";
+// Tier-1 Enterprise Schema: Semantic Embeddings + Fractional FTE + Live WS Sync
+const STORAGE_VERSION = "v9_tier1";
 
 const loadStorage = (key, fallback) => {
   const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;
@@ -25,22 +27,15 @@ const saveStorage = (key, data) => {
 };
 
 // ------------------------------------------------------------
-// TalentMatch AI - Deterministic Multi-Vector Matching Engine
-// Decomposed into 3 Explainable Vectors:
-// 1. Technical Competency Fit (default 60%)
-// 2. Seniority & Experience Threshold (default 25%)
-// 3. Domain & Career Aspiration Vector (default 15%)
-// ------------------------------------------------------------
-// TalentMatch AI - Deterministic Multi-Vector Matching Engine
-// Decomposed into 4 Explainable Vectors:
-// 1. Technical Skill Compatibility: 40%
+// TalentMatch AI - Tier-1 Multi-Vector Matching Engine
+// 1. Technical Skill Compatibility: 40% (Exact + Semantic Embeddings)
 // 2. Experience Compatibility: 25%
-// 3. Availability: 20%
+// 3. Availability & Fractional Capacity: 20%
 // 4. Career Interest Alignment: 15%
 // Hard Eligibility Gates:
-// - Employee must be available (on bench)
-// - Mandatory skills must meet project's minimum proficiency
-// - Minimum experience must be satisfied
+// - Employee must have available capacity (> 0%)
+// - Mandatory skills must meet minimum proficiency (exact or semantic fit >= 0.75)
+// - Minimum experience threshold satisfied
 // - Seniority requirements validated
 // ------------------------------------------------------------
 export const calculateMatchScore = (
@@ -60,7 +55,7 @@ export const calculateMatchScore = (
       missingSkills: [],
       weakerSkills: [],
       experienceComparison: { required: 0, actual: 0, delta: 0, meetsThreshold: false },
-      availabilityComparison: { status: "UNKNOWN", daysOnBench: 0, isReady: false },
+      availabilityComparison: { status: "UNKNOWN", availableCapacity: 0, daysOnBench: 0, isReady: false },
       aspirationComparison: { matchedInterests: [], domainAligned: false }
     };
   }
@@ -75,48 +70,94 @@ export const calculateMatchScore = (
   const eligibilityReasons = [];
 
   let skillPoints = 0;
+
   reqSkills.forEach((req) => {
-    const found = empSkills.find(
-      (s) => s.name.toLowerCase() === req.name.toLowerCase()
+    const reqNorm = (req.name || "").toLowerCase().trim();
+    const exactFound = empSkills.find(
+      (s) => (s.name || "").toLowerCase().trim() === reqNorm
     );
 
-    if (found) {
-      const ratio = Math.min(found.proficiency / (req.minProficiency || 1), 1.0);
-      const isOver = found.proficiency > req.minProficiency;
-      const isExact = found.proficiency === req.minProficiency;
-      
+    if (exactFound) {
+      const ratio = Math.min(exactFound.proficiency / (req.minProficiency || 1), 1.0);
+      const isOver = exactFound.proficiency > req.minProficiency;
+      const isExact = exactFound.proficiency === req.minProficiency;
+
       skillComparison.push({
         name: req.name,
         reqProficiency: req.minProficiency,
-        empProficiency: found.proficiency,
+        empProficiency: exactFound.proficiency,
         status: isOver ? "EXCEEDS" : isExact ? "MEETS" : "PARTIAL",
-        ratio
+        ratio,
+        isSemantic: false
       });
 
-      if (found.proficiency >= req.minProficiency) {
+      if (exactFound.proficiency >= req.minProficiency) {
         matchingSkills.push({
-          name: found.name,
-          empProficiency: found.proficiency,
-          reqProficiency: req.minProficiency
+          name: exactFound.name,
+          empProficiency: exactFound.proficiency,
+          reqProficiency: req.minProficiency,
+          isSemantic: false
         });
       } else {
         weakerSkills.push({
-          name: found.name,
-          empProficiency: found.proficiency,
-          reqProficiency: req.minProficiency
+          name: exactFound.name,
+          empProficiency: exactFound.proficiency,
+          reqProficiency: req.minProficiency,
+          isSemantic: false
         });
       }
 
       skillPoints += ratio;
     } else {
-      skillComparison.push({
-        name: req.name,
-        reqProficiency: req.minProficiency,
-        empProficiency: 0,
-        status: "MISSING",
-        ratio: 0
-      });
-      missingSkills.push(req.name);
+      // 1. Semantic Skill Embedding & Knowledge Graph Match
+      const semMatch = findSemanticSkillMatch(req.name, empSkills);
+      if (semMatch.matched) {
+        const ratio = Math.min(semMatch.effectiveProficiency / (req.minProficiency || 1), 1.0);
+        const isMet = semMatch.effectiveProficiency >= (req.minProficiency * 0.8);
+
+        skillComparison.push({
+          name: req.name,
+          reqProficiency: req.minProficiency,
+          empProficiency: semMatch.effectiveProficiency,
+          status: "SEMANTIC_FIT",
+          ratio,
+          isSemantic: true,
+          sourceSkill: semMatch.sourceSkill,
+          affinity: semMatch.affinity
+        });
+
+        if (isMet) {
+          matchingSkills.push({
+            name: `${req.name} (via ${semMatch.sourceSkill} ${Math.round(semMatch.affinity * 100)}% fit)`,
+            empProficiency: semMatch.effectiveProficiency,
+            reqProficiency: req.minProficiency,
+            isSemantic: true,
+            sourceSkill: semMatch.sourceSkill,
+            affinity: semMatch.affinity
+          });
+        } else {
+          weakerSkills.push({
+            name: `${req.name} (via ${semMatch.sourceSkill} ${Math.round(semMatch.affinity * 100)}% fit)`,
+            empProficiency: semMatch.effectiveProficiency,
+            reqProficiency: req.minProficiency,
+            isSemantic: true,
+            sourceSkill: semMatch.sourceSkill,
+            affinity: semMatch.affinity
+          });
+        }
+
+        skillPoints += ratio * semMatch.affinity;
+      } else {
+        skillComparison.push({
+          name: req.name,
+          reqProficiency: req.minProficiency,
+          empProficiency: 0,
+          status: "MISSING",
+          ratio: 0,
+          isSemantic: false
+        });
+        missingSkills.push(req.name);
+      }
     }
   });
 
@@ -139,18 +180,23 @@ export const calculateMatchScore = (
     meetsThreshold: expActual >= expNeeded
   };
 
-  // 3. Availability Dimension (20% default)
-  const isBench = employee.availabilityStatus === "BENCH";
+  // 3. Availability & Fractional Capacity Dimension (20% default)
+  const availableCapacity = employee.availableCapacityPercentage !== undefined
+    ? employee.availableCapacityPercentage
+    : (employee.availabilityStatus === "BENCH" ? 100 : (employee.availabilityStatus === "PARTIAL_BENCH" ? 50 : 0));
+
+  const isAvailable = availableCapacity > 0;
   let daysOnBench = 0;
   if (employee.benchSince) {
     daysOnBench = Math.max(1, Math.floor((new Date() - new Date(employee.benchSince)) / (1000 * 60 * 60 * 24)));
   }
 
-  const availabilityFit = isBench ? (customWeights.availabilityWeight || 20) : 0;
+  const availabilityFit = Math.round((availableCapacity / 100) * (customWeights.availabilityWeight || 20));
   const availabilityComparison = {
     status: employee.availabilityStatus,
+    availableCapacity,
     daysOnBench,
-    isReady: isBench
+    isReady: isAvailable
   };
 
   // 4. Career Aspiration & Domain Alignment (15% default)
@@ -176,8 +222,8 @@ export const calculateMatchScore = (
   const totalScore = Math.min(technicalFit + experienceFit + availabilityFit + aspirationFit, 100);
 
   // HARD ELIGIBILITY CHECKS
-  if (!isBench) {
-    eligibilityReasons.push(`Not Available on Bench (Current status: ${employee.availabilityStatus})`);
+  if (!isAvailable) {
+    eligibilityReasons.push(`0% Available Capacity (Fully committed 100% to ${employee.assignedProjectName || "active engagements"})`);
   }
   if (missingSkills.length > 0) {
     eligibilityReasons.push(`Missing mandatory skill${missingSkills.length > 1 ? "s" : ""}: ${missingSkills.join(", ")}`);
@@ -194,19 +240,25 @@ export const calculateMatchScore = (
   // Transparent, explainable rationale
   const explanationParts = [];
   if (isEligible) {
-    explanationParts.push(`Fully Eligible: Satisfies all ${reqSkills.length} mandatory competencies with ${expActual}y experience`);
+    explanationParts.push(`Fully Eligible: ${availableCapacity}% capacity ready, satisfies all ${reqSkills.length} competencies with ${expActual}y experience`);
   } else {
-    explanationParts.push(`Skill / Eligibility Gap: ${eligibilityReasons[0]}`);
+    explanationParts.push(`Eligibility Gap: ${eligibilityReasons[0]}`);
   }
-  if (matchingSkills.length > 0) {
-    explanationParts.push(`Verified mastery in ${matchingSkills.map((s) => s.name).join(", ")}`);
+
+  const semMatches = matchingSkills.filter(s => s.isSemantic);
+  if (semMatches.length > 0) {
+    explanationParts.push(`Semantic Vector Match: ${semMatches.map(s => `${s.sourceSkill} → ${s.name}`).join(", ")}`);
+  }
+
+  if (matchingSkills.filter(s => !s.isSemantic).length > 0) {
+    explanationParts.push(`Verified mastery in ${matchingSkills.filter(s => !s.isSemantic).map((s) => s.name).join(", ")}`);
   }
   if (matchedInterests.length > 0) {
     explanationParts.push(`Domain interest alignment in ${matchedInterests.join(", ")}`);
   }
 
   // Upskilling Plan for Gaps
-  const gapSkills = [...missingSkills, ...weakerSkills.map(w => w.name)];
+  const gapSkills = [...missingSkills, ...weakerSkills.map(w => w.name.split(" ")[0])];
   const upskillingPlan = gapSkills.map((skillName) => {
     const key = skillName.toLowerCase();
     const course = upskillingCourses[key] || {
@@ -244,16 +296,57 @@ export const calculateMatchScore = (
 
 export const api = {
   // Single Source of Truth Reconciler
-  // Guarantees project.allocatedCount ALWAYS equals count of employees assigned to that project
   async reconcileData() {
     const employees = loadStorage("employees", initialEmployees);
     const projects = loadStorage("projects", initialProjects);
+    const allocations = loadStorage("allocations", initialAllocations);
 
-    projects.forEach((proj) => {
-      const assignedEmps = employees.filter(
-        (e) => e.assignedProjectId === proj.id && e.availabilityStatus === "ALLOCATED"
+    // Reconcile employee fractional capacity from approved allocations
+    employees.forEach((emp) => {
+      const empAllocs = allocations.filter(
+        (a) => a.employeeId === emp.id && a.status === "APPROVED"
       );
+
+      if (empAllocs.length > 0) {
+        const committedPct = empAllocs.reduce((sum, a) => sum + (a.allocationPercentage || 100), 0);
+        emp.availableCapacityPercentage = Math.max(0, 100 - committedPct);
+        emp.availabilityStatus = emp.availableCapacityPercentage === 0
+          ? "ALLOCATED"
+          : (emp.availableCapacityPercentage === 100 ? "BENCH" : "PARTIAL_BENCH");
+        
+        emp.allocatedEngagements = empAllocs.map((a) => ({
+          projectId: a.projectId,
+          projectCode: a.projectCode,
+          projectName: a.projectName,
+          clientName: a.clientName,
+          allocationPercentage: a.allocationPercentage || 100,
+          effectiveStartDate: a.effectiveStartDate,
+          allocationId: a.id
+        }));
+        emp.assignedProjectId = empAllocs[0]?.projectId || null;
+        emp.assignedProjectName = emp.allocatedEngagements.map(e => `${e.projectName} (${e.allocationPercentage}%)`).join(", ");
+        if (emp.availableCapacityPercentage === 0) emp.benchSince = null;
+      } else {
+        if (emp.availabilityStatus === "ALLOCATED" && (!emp.allocatedEngagements || emp.allocatedEngagements.length === 0)) {
+          emp.availableCapacityPercentage = 0;
+        } else if (emp.availableCapacityPercentage === undefined) {
+          emp.availableCapacityPercentage = emp.availabilityStatus === "BENCH" ? 100 : 0;
+        }
+      }
+    });
+
+    // Reconcile project staffing counts & FTE
+    projects.forEach((proj) => {
+      const projAllocs = allocations.filter(
+        (a) => a.projectId === proj.id && a.status === "APPROVED"
+      );
+      const assignedEmps = employees.filter((e) =>
+        projAllocs.some((a) => a.employeeId === e.id) ||
+        (e.assignedProjectId === proj.id && e.availabilityStatus === "ALLOCATED")
+      );
+      const totalFTE = projAllocs.reduce((sum, a) => sum + ((a.allocationPercentage || 100) / 100), 0);
       proj.allocatedCount = assignedEmps.length;
+      proj.allocatedFTE = totalFTE > 0 ? +totalFTE.toFixed(2) : assignedEmps.length;
       proj.assignedEmployeeIds = assignedEmps.map((e) => e.id);
       if (proj.allocatedCount >= proj.teamSize) {
         proj.status = "FULFILLED";
@@ -264,6 +357,7 @@ export const api = {
       }
     });
 
+    saveStorage("employees", employees);
     saveStorage("projects", projects);
     return { employees, projects };
   },
@@ -274,16 +368,28 @@ export const api = {
       const allocations = loadStorage("allocations", initialAllocations);
 
       const benchCount = employees.filter((e) => e.availabilityStatus === "BENCH").length;
+      const partialBenchCount = employees.filter((e) => e.availabilityStatus === "PARTIAL_BENCH").length;
       const allocatedCount = employees.filter((e) => e.availabilityStatus === "ALLOCATED").length;
       const pendingApprovals = allocations.filter((a) => a.status === "PENDING_APPROVAL").length;
+
+      // True Enterprise FTE Utilization Rate
+      const totalCapacityCommitted = employees.reduce(
+        (sum, e) => sum + (100 - (e.availableCapacityPercentage ?? (e.availabilityStatus === "BENCH" ? 100 : 0))),
+        0
+      );
+      const workforceUtilization = employees.length > 0
+        ? Math.round((totalCapacityCommitted / (employees.length * 100)) * 100)
+        : 0;
 
       return {
         totalEmployees: employees.length,
         benchCount,
+        partialBenchCount,
         allocatedCount,
         totalProjects: projects.length,
         activeProjects: projects.filter((p) => p.status === "OPEN").length,
-        pendingApprovals
+        pendingApprovals,
+        workforceUtilization
       };
     }
     const res = await fetch(`${API_BASE_URL}/dashboard/stats`);
@@ -302,19 +408,23 @@ export const api = {
   async addEmployee(newEmployee) {
     if (USE_MOCK) {
       const employees = loadStorage("employees", initialEmployees);
+      const initialStatus = newEmployee.availabilityStatus || "BENCH";
       const created = {
         ...newEmployee,
         id: `emp-${Date.now()}`,
         empCode: `TM-${Math.floor(10000 + Math.random() * 90000)}`,
-        availabilityStatus: newEmployee.availabilityStatus || "BENCH",
-        benchSince: newEmployee.availabilityStatus === "ALLOCATED" ? null : new Date().toISOString().split("T")[0],
-        assignedProjectId: newEmployee.availabilityStatus === "ALLOCATED" ? newEmployee.assignedProjectId || null : null,
-        assignedProjectName: newEmployee.availabilityStatus === "ALLOCATED" ? newEmployee.assignedProjectName || null : null,
+        availabilityStatus: initialStatus,
+        availableCapacityPercentage: initialStatus === "BENCH" ? 100 : (initialStatus === "PARTIAL_BENCH" ? 50 : 0),
+        benchSince: initialStatus === "ALLOCATED" ? null : new Date().toISOString().split("T")[0],
+        assignedProjectId: initialStatus === "ALLOCATED" ? newEmployee.assignedProjectId || null : null,
+        assignedProjectName: initialStatus === "ALLOCATED" ? newEmployee.assignedProjectName || null : null,
+        allocatedEngagements: [],
         certifications: newEmployee.certifications || []
       };
       employees.unshift(created);
       saveStorage("employees", employees);
       await this.reconcileData();
+      liveSync.broadcast("EMPLOYEE_MUTATED", { action: "add", employee: created });
       return created;
     }
     const res = await fetch(`${API_BASE_URL}/employees`, {
@@ -322,7 +432,9 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newEmployee)
     });
-    return res.json();
+    const data = await res.json();
+    liveSync.broadcast("EMPLOYEE_MUTATED", { action: "add", employee: data });
+    return data;
   },
 
   async getProjects() {
@@ -342,11 +454,13 @@ export const api = {
         id: `proj-${Date.now()}`,
         projectCode: `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
         allocatedCount: 0,
+        allocatedFTE: 0,
         assignedEmployeeIds: [],
         status: "OPEN"
       };
       projects.unshift(created);
       saveStorage("projects", projects);
+      liveSync.broadcast("PROJECT_MUTATED", { action: "add", project: created });
       return created;
     }
     const res = await fetch(`${API_BASE_URL}/projects`, {
@@ -354,7 +468,9 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProject)
     });
-    return res.json();
+    const data = await res.json();
+    liveSync.broadcast("PROJECT_MUTATED", { action: "add", project: data });
+    return data;
   },
 
   async updateEmployee(updatedEmployee) {
@@ -365,6 +481,7 @@ export const api = {
         employees[index] = { ...employees[index], ...updatedEmployee };
         saveStorage("employees", employees);
         await this.reconcileData();
+        liveSync.broadcast("EMPLOYEE_MUTATED", { action: "update", employee: employees[index] });
         return employees[index];
       }
       return null;
@@ -388,6 +505,7 @@ export const api = {
       const filtered = employees.filter((e) => e.id !== employeeId);
       saveStorage("employees", filtered);
       await this.reconcileData();
+      liveSync.broadcast("EMPLOYEE_MUTATED", { action: "delete", employeeId });
       return { success: true };
     }
     const res = await fetch(`${API_BASE_URL}/employees/${employeeId}`, {
@@ -404,6 +522,7 @@ export const api = {
         projects[index] = { ...projects[index], ...updatedProject };
         saveStorage("projects", projects);
         await this.reconcileData();
+        liveSync.broadcast("PROJECT_MUTATED", { action: "update", project: projects[index] });
         return projects[index];
       }
       return null;
@@ -422,12 +541,13 @@ export const api = {
       const employees = loadStorage("employees", initialEmployees);
       const allocations = loadStorage("allocations", initialAllocations);
 
-      // De-allocate any employees assigned to this project back to bench
       employees.forEach((emp) => {
         if (emp.assignedProjectId === projectId) {
           emp.availabilityStatus = "BENCH";
+          emp.availableCapacityPercentage = 100;
           emp.assignedProjectId = null;
           emp.assignedProjectName = null;
+          emp.allocatedEngagements = [];
           emp.benchSince = new Date().toISOString().split("T")[0];
         }
       });
@@ -439,6 +559,7 @@ export const api = {
       saveStorage("projects", filteredProjects);
       saveStorage("allocations", filteredAllocations);
       await this.reconcileData();
+      liveSync.broadcast("PROJECT_MUTATED", { action: "delete", projectId });
       return { success: true };
     }
     const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
@@ -446,7 +567,6 @@ export const api = {
     });
     return res.json();
   },
-
 
   // AI Matching Workspace Recommendations
   async getRecommendations(projectId, customWeights) {
@@ -457,7 +577,6 @@ export const api = {
       const project = projects.find((p) => p.id === projectId);
       if (!project) return [];
 
-      // Rank all employees and partition into Eligible vs Skill Gaps
       const evaluated = employees.map((emp) => {
         const match = calculateMatchScore(emp, project, customWeights);
         const pendingAlloc = allocations.find(
@@ -484,15 +603,15 @@ export const api = {
         };
       });
 
+      // Eligible: Must meet gates and have capacity > 0
       const eligible = evaluated
-        .filter((c) => c.isEligible && c.employee.availabilityStatus === "BENCH")
+        .filter((c) => c.isEligible && (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) > 0)
         .sort((a, b) => b.aiMatchScore - a.aiMatchScore);
 
       const skillGaps = evaluated
-        .filter((c) => !c.isEligible || c.employee.availabilityStatus !== "BENCH")
+        .filter((c) => !c.isEligible || (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) === 0)
         .sort((a, b) => b.aiMatchScore - a.aiMatchScore);
 
-      // Return unified array with partition metadata
       const all = [...eligible, ...skillGaps];
       all.eligible = eligible;
       all.skillGaps = skillGaps;
@@ -502,7 +621,6 @@ export const api = {
     return res.json();
   },
 
-  // 3.1: Reverse Match: Ranked Project Matches for a Single Employee Dossier
   async getEmployeeProjectRecommendations(employeeId) {
     if (USE_MOCK) {
       const projects = loadStorage("projects", initialProjects);
@@ -539,10 +657,11 @@ export const api = {
     return res.json();
   },
 
-  // Step 6 & 7: Allocation Confirmation Workflow
+  // Fractional / Multi-Project Allocation Workflow
   async proposeAllocation({
     employeeId,
     projectId,
+    allocationPercentage = 100, // 100% | 50% | 25%
     aiMatchScore,
     scoreBreakdown,
     aiExplanation,
@@ -558,20 +677,25 @@ export const api = {
       const employee = employees.find((e) => e.id === employeeId);
       const project = projects.find((p) => p.id === projectId);
 
-      if (!employee) throw new Error("Employee not found");
-      if (!project) throw new Error("Project not found");
+      if (!employee) throw new Error("Employee record not found");
+      if (!project) throw new Error("Project record not found");
 
-      // Prevent assigning an employee who is already ALLOCATED to an active project
-      if (employee.availabilityStatus === "ALLOCATED") {
-        throw new Error(`${employee.name} is already allocated to ${employee.assignedProjectName || "another engagement"}. Unassign before reallocating.`);
+      const currentCapacity = employee.availableCapacityPercentage !== undefined
+        ? employee.availableCapacityPercentage
+        : (employee.availabilityStatus === "BENCH" ? 100 : 0);
+
+      const requestedPct = Number(allocationPercentage) || 100;
+
+      if (requestedPct > currentCapacity) {
+        throw new Error(`Insufficient capacity. ${employee.name} only has ${currentCapacity}% capacity available (requested ${requestedPct}%).`);
       }
 
-      // Check capacity
+      // Check project capacity
       const currentAllocated = employees.filter(
-        (e) => e.assignedProjectId === project.id && e.availabilityStatus === "ALLOCATED"
+        (e) => e.assignedProjectId === project.id && (e.availabilityStatus === "ALLOCATED" || e.availabilityStatus === "PARTIAL_BENCH")
       ).length;
-      if (currentAllocated >= project.teamSize) {
-        throw new Error(`Project capacity reached (${currentAllocated}/${project.teamSize} seats filled).`);
+      if (currentAllocated >= project.teamSize && requestedPct === 100) {
+        throw new Error(`Project capacity reached (${currentAllocated}/${project.teamSize} seats committed).`);
       }
 
       const allocStatus = directAuthorize ? "APPROVED" : "PENDING_APPROVAL";
@@ -587,6 +711,7 @@ export const api = {
         projectCode: project.projectCode,
         projectName: project.name,
         clientName: project.client,
+        allocationPercentage: requestedPct,
         aiMatchScore,
         scoreBreakdown: scoreBreakdown || { technicalFit: 50, experienceFit: 25, aspirationFit: 15 },
         aiExplanation,
@@ -598,10 +723,22 @@ export const api = {
       };
 
       if (directAuthorize) {
-        employee.availabilityStatus = "ALLOCATED";
+        const remainingCap = Math.max(0, currentCapacity - requestedPct);
+        employee.availableCapacityPercentage = remainingCap;
+        employee.availabilityStatus = remainingCap === 0 ? "ALLOCATED" : "PARTIAL_BENCH";
+        employee.allocatedEngagements = employee.allocatedEngagements || [];
+        employee.allocatedEngagements.push({
+          projectId: project.id,
+          projectCode: project.projectCode,
+          projectName: project.name,
+          clientName: project.client,
+          allocationPercentage: requestedPct,
+          effectiveStartDate: newAlloc.effectiveStartDate,
+          allocationId: newAlloc.id
+        });
         employee.assignedProjectId = project.id;
-        employee.assignedProjectName = project.name;
-        employee.benchSince = null;
+        employee.assignedProjectName = employee.allocatedEngagements.map(e => `${e.projectName} (${e.allocationPercentage}%)`).join(", ");
+        if (remainingCap === 0) employee.benchSince = null;
       }
 
       allocations.unshift(newAlloc);
@@ -609,15 +746,18 @@ export const api = {
       saveStorage("employees", employees);
       await this.reconcileData();
 
+      liveSync.broadcast("ALLOCATION_CREATED", newAlloc);
       return newAlloc;
     }
 
     const res = await fetch(`${API_BASE_URL}/allocations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId, projectId, aiMatchScore, aiExplanation, effectiveStartDate, managerNotes, directAuthorize })
+      body: JSON.stringify({ employeeId, projectId, allocationPercentage, aiMatchScore, aiExplanation, effectiveStartDate, managerNotes, directAuthorize })
     });
-    return res.json();
+    const data = await res.json();
+    liveSync.broadcast("ALLOCATION_CREATED", data);
+    return data;
   },
 
   async reviewAllocation(allocationId, decision, managerNotes = "") {
@@ -633,28 +773,45 @@ export const api = {
       alloc.reviewedAt = new Date().toISOString();
       if (managerNotes) alloc.managerNotes = managerNotes;
 
-      if (decision === "APPROVED") {
-        const emp = employees.find((e) => e.id === alloc.employeeId);
-        const proj = projects.find((p) => p.id === alloc.projectId);
+      const emp = employees.find((e) => e.id === alloc.employeeId);
+      const proj = projects.find((p) => p.id === alloc.projectId);
 
-        if (emp && proj) {
-          // Verify employee is not already allocated
-          if (emp.availabilityStatus === "ALLOCATED" && emp.assignedProjectId !== proj.id) {
-            throw new Error(`${emp.name} is already committed to another project.`);
-          }
+      if (decision === "APPROVED" && emp && proj) {
+        const requestedPct = alloc.allocationPercentage || 100;
+        const currentCap = emp.availableCapacityPercentage !== undefined
+          ? emp.availableCapacityPercentage
+          : (emp.availabilityStatus === "BENCH" ? 100 : 0);
 
-          emp.availabilityStatus = "ALLOCATED";
-          emp.assignedProjectId = proj.id;
-          emp.assignedProjectName = proj.name;
-          emp.benchSince = null;
-        }
-      } else if (decision === "REJECTED") {
-        const emp = employees.find((e) => e.id === alloc.employeeId);
-        if (emp && emp.assignedProjectId === alloc.projectId) {
+        const newCap = Math.max(0, currentCap - requestedPct);
+        emp.availableCapacityPercentage = newCap;
+        emp.availabilityStatus = newCap === 0 ? "ALLOCATED" : "PARTIAL_BENCH";
+        emp.allocatedEngagements = emp.allocatedEngagements || [];
+        emp.allocatedEngagements.push({
+          projectId: proj.id,
+          projectCode: proj.projectCode,
+          projectName: proj.name,
+          clientName: proj.client,
+          allocationPercentage: requestedPct,
+          effectiveStartDate: alloc.effectiveStartDate,
+          allocationId: alloc.id
+        });
+        emp.assignedProjectId = proj.id;
+        emp.assignedProjectName = emp.allocatedEngagements.map(e => `${e.projectName} (${e.allocationPercentage}%)`).join(", ");
+        if (newCap === 0) emp.benchSince = null;
+      } else if (decision === "REJECTED" && emp) {
+        // If restoring rejected proposal
+        const activeEngagements = (emp.allocatedEngagements || []).filter(e => e.allocationId !== allocationId);
+        emp.allocatedEngagements = activeEngagements;
+        if (activeEngagements.length === 0) {
           emp.availabilityStatus = "BENCH";
+          emp.availableCapacityPercentage = 100;
           emp.assignedProjectId = null;
           emp.assignedProjectName = null;
           emp.benchSince = new Date().toISOString().split("T")[0];
+        } else {
+          const committedPct = activeEngagements.reduce((sum, e) => sum + e.allocationPercentage, 0);
+          emp.availableCapacityPercentage = Math.max(0, 100 - committedPct);
+          emp.availabilityStatus = emp.availableCapacityPercentage === 0 ? "ALLOCATED" : "PARTIAL_BENCH";
         }
       }
 
@@ -662,6 +819,7 @@ export const api = {
       saveStorage("employees", employees);
       await this.reconcileData();
 
+      liveSync.broadcast("ALLOCATION_REVIEWED", { allocationId, decision });
       return alloc;
     }
 
@@ -670,6 +828,8 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ decision, managerNotes })
     });
-    return res.json();
+    const data = await res.json();
+    liveSync.broadcast("ALLOCATION_REVIEWED", { allocationId, decision });
+    return data;
   }
 };

@@ -24,6 +24,7 @@ export default function Dashboard({
   // Dynamic calculations from actual data (Single Source of Truth)
   const totalEmployees = (employees || []).length;
   const benchEmployees = (employees || []).filter((e) => e.availabilityStatus === "BENCH");
+  const partialBenchEmployees = (employees || []).filter((e) => e.availabilityStatus === "PARTIAL_BENCH");
   const allocatedEmployees = (employees || []).filter((e) => e.availabilityStatus === "ALLOCATED");
   const openProjects = (projects || []).filter((p) => p.status === "OPEN" || p.status === "active");
 
@@ -31,7 +32,12 @@ export default function Dashboard({
   const filledPositions = (projects || []).reduce((acc, p) => acc + (p.allocatedCount || 0), 0);
   const openPositions = Math.max(0, totalPositions - filledPositions);
 
-  const utilizationRate = totalEmployees > 0 ? Math.round((allocatedEmployees.length / totalEmployees) * 100) : 0;
+  // True Tier-1 FTE Utilization
+  const totalCapacityCommitted = (employees || []).reduce(
+    (sum, e) => sum + (100 - (e.availableCapacityPercentage ?? (e.availabilityStatus === "BENCH" ? 100 : 0))),
+    0
+  );
+  const utilizationRate = totalEmployees > 0 ? Math.round((totalCapacityCommitted / (totalEmployees * 100)) * 100) : 0;
   const benchRate = 100 - utilizationRate;
 
   const pendingApprovals = (allocations || []).filter((a) => a.status === "PENDING_APPROVAL");
@@ -233,10 +239,15 @@ export default function Dashboard({
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-950">On Bench</span>
             <Clock className="h-4 w-4 text-amber-500" />
           </div>
-          <div className="text-2xl sm:text-3xl font-black text-amber-950 font-mono tracking-tight">
-            {benchEmployees.length}
+          <div className="text-2xl sm:text-3xl font-black text-amber-950 font-mono tracking-tight flex items-baseline gap-2">
+            <span>{benchEmployees.length}</span>
+            {partialBenchEmployees.length > 0 && (
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                +{partialBenchEmployees.length} partial
+              </span>
+            )}
           </div>
-          <p className="mt-1 text-[11px] font-bold text-amber-800">{benchRate}% of Total</p>
+          <p className="mt-1 text-[11px] font-bold text-amber-800">{benchRate}% Capacity Idle</p>
         </div>
 
         {/* 3. Employees Allocated */}

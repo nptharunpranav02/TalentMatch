@@ -292,7 +292,7 @@ export default function AIMatching({
               candidateView === "eligible" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Eligible for SOW ({recommendations.filter(c => c.isEligible && c.employee.availabilityStatus === "BENCH").length})
+            Eligible for SOW ({recommendations.filter(c => c.isEligible && (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) > 0).length})
           </button>
           <button
             onClick={() => setCandidateView("gaps")}
@@ -300,7 +300,7 @@ export default function AIMatching({
               candidateView === "gaps" ? "bg-amber-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Candidates with Skill Gaps ({recommendations.filter(c => !c.isEligible || c.employee.availabilityStatus !== "BENCH").length})
+            Candidates with Gaps / Committed ({recommendations.filter(c => !c.isEligible || (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) === 0).length})
           </button>
         </div>
 
@@ -335,8 +335,9 @@ export default function AIMatching({
         <div className="space-y-4">
           {[...recommendations]
             .filter((item) => {
-              if (candidateView === "eligible") return item.isEligible && item.employee.availabilityStatus === "BENCH";
-              if (candidateView === "gaps") return !item.isEligible || item.employee.availabilityStatus !== "BENCH";
+              const cap = item.employee.availableCapacityPercentage ?? (item.employee.availabilityStatus === "BENCH" ? 100 : 0);
+              if (candidateView === "eligible") return item.isEligible && cap > 0;
+              if (candidateView === "gaps") return !item.isEligible || cap === 0;
               return true;
             })
             .sort((a, b) => {
@@ -424,13 +425,17 @@ export default function AIMatching({
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
                               🟡 PENDING APPROVAL
                             </span>
-                          ) : employee.availabilityStatus === "ALLOCATED" ? (
+                          ) : (employee.availableCapacityPercentage ?? (employee.availabilityStatus === "BENCH" ? 100 : 0)) === 0 ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-300">
-                              🔒 ALLOCATED (${employee.assignedProjectName || "SOW"})
+                              🔒 ALLOCATED (0% Available)
+                            </span>
+                          ) : employee.availabilityStatus === "PARTIAL_BENCH" ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">
+                              ⚡ PARTIAL BENCH ({employee.availableCapacityPercentage}% Capacity Available)
                             </span>
                           ) : item.isEligible ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                              🟢 100% ELIGIBLE CANDIDATE
+                              🟢 {employee.availableCapacityPercentage ?? 100}% CAPACITY READY
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
@@ -494,7 +499,9 @@ export default function AIMatching({
                         <div 
                           key={skill.name}
                           className={`p-2 rounded-lg border flex items-center justify-between ${
-                            skill.status === "EXCEEDS"
+                            skill.status === "SEMANTIC_FIT"
+                              ? "bg-purple-50/80 border-purple-300 text-purple-950"
+                              : skill.status === "EXCEEDS"
                               ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
                               : skill.status === "MEETS"
                               ? "bg-blue-50/80 border-blue-200 text-blue-900"
@@ -502,12 +509,19 @@ export default function AIMatching({
                           }`}
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
-                            {skill.status === "MISSING" ? (
+                            {skill.status === "SEMANTIC_FIT" ? (
+                              <Sparkles className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                            ) : skill.status === "MISSING" ? (
                               <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                             ) : (
                               <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                             )}
                             <strong className="truncate">{skill.name}</strong>
+                            {skill.isSemantic && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-200 text-purple-900 border border-purple-300 ml-1">
+                                SEMANTIC ({skill.sourceSkill} {Math.round((skill.affinity || 0.9) * 100)}%)
+                              </span>
+                            )}
                           </div>
 
                           <div className="text-[11px] font-mono shrink-0 ml-2">

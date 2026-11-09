@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
 
-export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData, onOpenDemoDrawer }) {
+export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData, onOpenDemoDrawer, isWsConnected }) {
   const { orgName, updateOrgName, currency, currencies, setCurrency } = useOrg();
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -207,6 +207,19 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
 
             {/* Right Action Icons: Currency + Notifications + Profile + Mobile Hamburger */}
             <div className="flex items-center gap-2 shrink-0">
+              {/* Live WebSocket Multi-User Sync Indicator */}
+              <div 
+                className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
+                  isWsConnected 
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800" 
+                    : "border-amber-200 bg-amber-50 text-amber-800"
+                }`}
+                title={isWsConnected ? "Live multi-user WebSocket synchronization active (port 5000)" : "Connecting to live WebSocket synchronization hub..."}
+              >
+                <span className={`h-2 w-2 rounded-full ${isWsConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}></span>
+                <span className="text-[11px] font-extrabold">{isWsConnected ? "Live Sync (WS)" : "Sync Standby"}</span>
+              </div>
+
               {/* Separate Developer/Demo Testing Area Trigger */}
               <button
                 onClick={onOpenDemoDrawer}

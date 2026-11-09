@@ -6,6 +6,9 @@ const connectDB = require("./config/db");
 const { getDbStatus } = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
+const http = require("http");
+const { WebSocketServer, WebSocket } = require("ws");
+
 const authRoutes = require("./routes/authRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const projectRoutes = require("./routes/projectRoutes");
@@ -13,6 +16,57 @@ const allocationRoutes = require("./routes/allocationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize WebSocket server on /ws path
+const wss = new WebSocketServer({ server, path: "/ws" });
+
+function broadcastSync(type, payload = {}) {
+    const message = JSON.stringify({
+        type,
+        payload,
+        timestamp: new Date().toISOString()
+    });
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
+}
+
+wss.on("connection", (ws) => {
+    console.log(`[WebSocket] Client connected. Total active clients: ${wss.clients.size}`);
+    
+    // Handshake
+    ws.send(JSON.stringify({
+        type: "SYNC_INITIALIZED",
+        payload: {
+            service: "TalentMatch Live Multi-User Sync",
+            clientsCount: wss.clients.size,
+            serverTime: new Date().toISOString()
+        }
+    }));
+
+    ws.on("message", (raw) => {
+        try {
+            const data = JSON.parse(raw);
+            if (data.type === "PING") {
+                ws.send(JSON.stringify({ type: "PONG", timestamp: Date.now() }));
+            } else if (data.type === "BROADCAST_ACTION") {
+                broadcastSync(data.actionType || "STATE_MUTATED", data.payload);
+            }
+        } catch (err) {
+            console.warn("[WebSocket] Error processing message:", err.message);
+        }
+    });
+
+    ws.on("close", () => {
+        console.log(`[WebSocket] Client disconnected. Total active clients: ${wss.clients.size}`);
+    });
+});
+
+// Attach broadcast helper to app for middleware / route handlers
+app.set("broadcastSync", broadcastSync);
 
 // Enable CORS for Frontend communication
 app.use(cors({
@@ -109,14 +163,27 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
+// Live Multi-User Sync Broadcast Endpoint
+app.post("/api/sync/broadcast", (req, res) => {
+    const { type = "STATE_MUTATED", payload = {} } = req.body;
+    broadcastSync(type, payload);
+    res.status(200).json({
+        success: true,
+        type,
+        clientsCount: wss.clients.size,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Server Lifecycle
 const startServer = async () => {
     await connectDB();
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`TalentMatch unified backend running on port ${PORT}`);
         console.log(`Live health check: http://localhost:${PORT}/api/health`);
+        console.log(`Live WebSocket multi-user sync: ws://localhost:${PORT}/ws`);
     });
 };
 

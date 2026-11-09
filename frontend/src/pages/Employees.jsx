@@ -199,6 +199,7 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
   };
 
   const benchEmployees = employees.filter((e) => e.availabilityStatus === "BENCH");
+  const partialEmployees = employees.filter((e) => e.availabilityStatus === "PARTIAL_BENCH");
   const allocatedEmployees = employees.filter((e) => e.availabilityStatus === "ALLOCATED");
 
   return (
@@ -214,6 +215,11 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
               {benchEmployees.length} on Bench
             </span>
+            {partialEmployees.length > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-900 border border-indigo-300 shadow-2xs">
+                {partialEmployees.length} Shared / Partial
+              </span>
+            )}
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
               {allocatedEmployees.length} Allocated
             </span>
@@ -350,6 +356,21 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
                   statusFilter === "BENCH" ? "bg-amber-600 text-white" : "bg-amber-100 text-amber-900 border border-amber-300"
                 }`}>
                   {benchEmployees.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setStatusFilter("PARTIAL_BENCH")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "PARTIAL_BENCH" 
+                    ? "bg-indigo-600 text-white shadow-xs" 
+                    : "text-indigo-900 hover:bg-indigo-50"
+                }`}
+              >
+                <span>Shared Pods</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  statusFilter === "PARTIAL_BENCH" ? "bg-indigo-700 text-white" : "bg-indigo-100 text-indigo-900 border border-indigo-300"
+                }`}>
+                  {partialEmployees.length}
                 </span>
               </button>
               <button
@@ -743,12 +764,16 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold border shrink-0 ${
-                          isBench
+                          emp.availabilityStatus === "PARTIAL_BENCH"
+                            ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                            : isBench
                             ? "bg-amber-100 text-amber-900 border-amber-300"
                             : "bg-emerald-100 text-emerald-900 border-emerald-300"
                         }`}
                       >
-                        {isBench ? "On Bench" : "Allocated"}
+                        {emp.availabilityStatus === "PARTIAL_BENCH" 
+                          ? `${emp.availableCapacityPercentage}% Bench` 
+                          : isBench ? "On Bench" : "Allocated"}
                       </span>
                     </div>
 

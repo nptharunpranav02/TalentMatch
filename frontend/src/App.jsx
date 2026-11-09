@@ -17,6 +17,7 @@ import CandidateCompareModal from "./components/CandidateCompareModal";
 import CommandPalette from "./components/CommandPalette";
 import ConfirmActionModal from "./components/ConfirmActionModal";
 import { api } from "./services/api";
+import { liveSync } from "./services/websocket";
 import { OrgProvider } from "./context/OrgContext";
 
 class ErrorBoundary extends React.Component {
@@ -57,6 +58,7 @@ class ErrorBoundary extends React.Component {
 }
 
 function TalentMatchMain() {
+  const [isWsConnected, setIsWsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -109,6 +111,18 @@ function TalentMatchMain() {
 
   useEffect(() => {
     loadAllData();
+    liveSync.connect();
+    const unsubStatus = liveSync.onStatusChange((status) => {
+      setIsWsConnected(status);
+    });
+    const unsubEvent = liveSync.onEvent((event) => {
+      console.log("[TalentMatch LiveSync] Reactive remote update received:", event);
+      loadAllData();
+    });
+    return () => {
+      unsubStatus();
+      unsubEvent();
+    };
   }, []);
 
   const handleEmployeeAdded = async (newEmp) => {
@@ -182,6 +196,7 @@ function TalentMatchMain() {
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onRefreshData={loadAllData}
         onOpenDemoDrawer={() => setIsDemoDrawerOpen(true)}
+        isWsConnected={isWsConnected}
       />
 
       {/* Main Content Area */}
