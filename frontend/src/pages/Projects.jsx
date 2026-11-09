@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Plus, Search, Calendar, Users } from "lucide-react";
+import { getSkillBadgeClass } from "../utils/skillColors";
 
 export default function Projects({ projects, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,7 +30,7 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
         </div>
         <button
           onClick={onOpenAddProject}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer self-start sm:self-auto shadow-xs"
         >
           <Plus className="h-3.5 w-3.5" />
           New Project
@@ -44,31 +45,31 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
             placeholder="Search projects, client, stack..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-md border border-slate-200 text-xs focus:outline-none focus:border-slate-400 bg-white"
+            className="w-full px-3 py-1.5 rounded-md border border-slate-200 text-xs focus:outline-none focus:border-blue-400 bg-white"
           />
         </div>
 
-        <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-xs font-medium">
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-medium shadow-2xs">
           <button
             onClick={() => setStatusFilter("ALL")}
-            className={`px-2.5 py-1 rounded transition-colors ${
-              statusFilter === "ALL" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+              statusFilter === "ALL" ? "bg-slate-900 text-white font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             All ({projects.length})
           </button>
           <button
             onClick={() => setStatusFilter("OPEN")}
-            className={`px-2.5 py-1 rounded transition-colors ${
-              statusFilter === "OPEN" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+              statusFilter === "OPEN" ? "bg-blue-100 text-blue-900 font-semibold border border-blue-200" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Open ({projects.filter((p) => p.status === "OPEN").length})
           </button>
           <button
             onClick={() => setStatusFilter("FULFILLED")}
-            className={`px-2.5 py-1 rounded transition-colors ${
-              statusFilter === "FULFILLED" ? "bg-slate-100 text-slate-900 font-semibold" : "text-slate-600 hover:text-slate-900"
+            className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
+              statusFilter === "FULFILLED" ? "bg-emerald-100 text-emerald-900 font-semibold border border-emerald-200" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Staffed ({projects.filter((p) => p.status === "FULFILLED").length})
@@ -86,26 +87,31 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
           return (
             <div
               key={proj.id}
-              className="rounded-lg bg-white border border-slate-200 p-5 hover:border-slate-300 transition-colors flex flex-col justify-between"
+              className="rounded-xl bg-white border border-slate-200/90 p-5 hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
             >
               <div>
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="text-xs text-slate-500 font-medium">{proj.client}</span>
+                    <span className="text-xs text-blue-700 font-semibold">{proj.client}</span>
                     <h2 className="text-base font-semibold text-slate-900 mt-0.5">{proj.name}</h2>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {proj.priority === "High" && (
-                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                         High Priority
                       </span>
                     )}
+                    {proj.priority === "Critical" && (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+                        Critical
+                      </span>
+                    )}
                     <span
-                      className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+                      className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
                         isFulfilled
-                          ? "bg-slate-100 text-slate-700 border-slate-200"
-                          : "bg-blue-50 text-blue-700 border-blue-200"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-blue-50 text-blue-800 border-blue-200"
                       }`}
                     >
                       {isFulfilled ? "Filled" : "Hiring"}
@@ -116,17 +122,17 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                 <p className="mt-2.5 text-xs text-slate-600 leading-relaxed">{proj.description}</p>
 
                 {/* Team Allocation Bar */}
-                <div className="mt-4 p-3 rounded-md bg-slate-50 border border-slate-100">
+                <div className="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-slate-600 font-medium">Team Allocation</span>
                     <span className="font-semibold text-slate-800">
                       {allocated} of {proj.teamSize} assigned ({percent}%)
                     </span>
                   </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-300 ${
-                        isFulfilled ? "bg-slate-700" : "bg-slate-900"
+                        isFulfilled ? "bg-emerald-600" : "bg-blue-600"
                       }`}
                       style={{ width: `${percent}%` }}
                     ></div>
@@ -135,19 +141,19 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
 
                 {/* Requirements info */}
                 <div className="mt-3.5 flex items-center gap-4 text-xs text-slate-500">
-                  <span>Min Exp: <strong className="text-slate-700 font-medium">{proj.minExperienceYears} yrs</strong></span>
+                  <span>Min Exp: <strong className="text-slate-800 font-medium">{proj.minExperienceYears} yrs</strong></span>
                   <span>•</span>
-                  <span>Deadline: <strong className="text-slate-700 font-medium">{proj.deadline || "TBD"}</strong></span>
+                  <span>Deadline: <strong className="text-slate-800 font-medium">{proj.deadline || "TBD"}</strong></span>
                 </div>
 
-                {/* Required Skills */}
-                <div className="mt-3.5">
-                  <p className="text-[11px] text-slate-400 font-medium">Required Stack</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {/* Required Skills with Categorized Natural Badges */}
+                <div className="mt-4">
+                  <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Required Competencies</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
                     {proj.requiredSkills.map((req) => (
                       <span
                         key={req.name}
-                        className="px-2 py-0.5 rounded text-xs bg-slate-50 text-slate-700 border border-slate-200"
+                        className={`px-2 py-0.5 rounded text-xs font-medium border ${getSkillBadgeClass(req.name)}`}
                       >
                         {req.name}
                       </span>
@@ -158,7 +164,7 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
 
               {/* Action */}
               <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   {isFulfilled ? "Fully staffed" : `${proj.teamSize - allocated} open spots remaining`}
                 </span>
                 <button
@@ -166,7 +172,7 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                     setSelectedProjectForMatch(proj.id);
                     setActiveTab("matching");
                   }}
-                  className="px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer shadow-xs"
                 >
                   Match Bench Talent
                 </button>

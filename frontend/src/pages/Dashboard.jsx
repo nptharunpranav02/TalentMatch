@@ -1,5 +1,6 @@
 import React from "react";
-import { Users, Briefcase, CheckSquare, Plus, ArrowRight, DollarSign, TrendingDown, Clock, Sparkles } from "lucide-react";
+import { Users, Briefcase, CheckSquare, Plus, ArrowRight, DollarSign, Clock, Sparkles } from "lucide-react";
+import { getSkillBadgeClass } from "../utils/skillColors";
 
 export default function Dashboard({
   stats,
@@ -22,13 +23,11 @@ export default function Dashboard({
     return Math.max(diff, 1);
   };
 
-  // Business Analytics Calculations
   const totalBenchDays = benchEmployees.reduce((acc, emp) => acc + getDaysOnBench(emp.benchSince), 0);
   const avgBenchDays = benchEmployees.length > 0 ? Math.round(totalBenchDays / benchEmployees.length) : 0;
-  const estimatedIdleCostPerDay = 150; // $150/day standard dev idle cost
-  const monthlyBenchRunRate = benchEmployees.length * estimatedIdleCostPerDay * 22; // 22 working days
+  const estimatedIdleCostPerDay = 150;
+  const monthlyBenchRunRate = benchEmployees.length * estimatedIdleCostPerDay * 22;
 
-  // Bench Aging segments
   const agingFresh = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) <= 14).length;
   const agingModerate = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 14 && getDaysOnBench(e.benchSince) <= 30).length;
   const agingCritical = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 30).length;
@@ -46,12 +45,12 @@ export default function Dashboard({
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setSelectedProjectForMatch("proj-2"); // Select Enterprise AI project
+              setSelectedProjectForMatch("proj-2");
               setActiveTab("matching");
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-blue-200 bg-blue-50/70 hover:bg-blue-100/80 text-blue-800 text-xs font-medium transition-colors cursor-pointer"
           >
-            <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
             <span>Load Demo Pitch Scenario</span>
           </button>
           <button
@@ -63,7 +62,7 @@ export default function Dashboard({
           </button>
           <button
             onClick={onOpenAddProject}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer shadow-xs"
           >
             <Plus className="h-3.5 w-3.5" />
             New Project
@@ -71,84 +70,99 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* KPI Metric Cards */}
+      {/* KPI Metric Cards with Natural Accent Tones */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* On Bench Card - Warm Ochre */}
         <div 
           onClick={() => setActiveTab("employees")}
-          className="p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
+          className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-amber-500 hover:border-slate-300 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>On Bench</span>
-            <Users className="h-4 w-4 text-slate-400" />
+            <span className="text-amber-800 font-semibold">On Bench</span>
+            <div className="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+              <Users className="h-4 w-4" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-slate-900">{stats.benchCount}</span>
-            <span className="text-xs text-amber-700 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">
+            <span className="text-2xl font-bold text-slate-900">{stats.benchCount}</span>
+            <span className="text-xs text-amber-800 font-medium bg-amber-100/70 px-1.5 py-0.5 rounded border border-amber-200">
               Avg {avgBenchDays}d idle
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">Unassigned engineers</p>
+          <p className="mt-1 text-xs text-slate-500">Unassigned engineers available</p>
         </div>
 
+        {/* Allocated Staff Card - Forest Emerald */}
         <div 
           onClick={() => setActiveTab("employees")}
-          className="p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
+          className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-emerald-600 hover:border-slate-300 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Allocated Talent</span>
-            <Briefcase className="h-4 w-4 text-slate-400" />
+            <span className="text-emerald-800 font-semibold">Allocated Talent</span>
+            <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+              <Briefcase className="h-4 w-4" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-slate-900">{stats.allocatedCount}</span>
-            <span className="text-xs text-slate-500">of {stats.totalEmployees} staff</span>
+            <span className="text-2xl font-bold text-slate-900">{stats.allocatedCount}</span>
+            <span className="text-xs text-emerald-800 font-medium bg-emerald-100/70 px-1.5 py-0.5 rounded border border-emerald-200">
+              Active billable
+            </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">Active billable project revenue</p>
+          <p className="mt-1 text-xs text-slate-500">Assigned to client projects</p>
         </div>
 
-        {/* Business Value Metric: Monthly Bench Idle Cost */}
-        <div className="p-4 rounded-lg bg-white border border-slate-200">
+        {/* Open Projects Card - Coastal Blue */}
+        <div 
+          onClick={() => setActiveTab("projects")}
+          className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-blue-600 hover:border-slate-300 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+        >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Monthly Bench Cost</span>
-            <DollarSign className="h-4 w-4 text-rose-500" />
+            <span className="text-blue-800 font-semibold">Open Projects</span>
+            <div className="p-1.5 rounded-lg bg-blue-50 text-blue-700">
+              <Briefcase className="h-4 w-4" />
+            </div>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-rose-600">${monthlyBenchRunRate.toLocaleString()}</span>
-            <span className="text-xs text-slate-400 font-medium">idle overhead</span>
+            <span className="text-2xl font-bold text-slate-900">{stats.activeProjects}</span>
+            <span className="text-xs text-blue-800 font-medium bg-blue-100/70 px-1.5 py-0.5 rounded border border-blue-200">
+              {stats.totalProjects} total
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Currently sourcing engineers</p>
+        </div>
+
+        {/* Monthly Bench Idle Cost - Terracotta / Rose */}
+        <div className="p-4 rounded-xl bg-white border border-slate-200/90 border-t-3 border-t-rose-500 shadow-2xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span className="text-rose-800 font-semibold">Monthly Bench Cost</span>
+            <div className="p-1.5 rounded-lg bg-rose-50 text-rose-700">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-rose-700">${monthlyBenchRunRate.toLocaleString()}</span>
+            <span className="text-xs text-rose-800 font-medium bg-rose-100/70 px-1.5 py-0.5 rounded border border-rose-200">
+              idle overhead
+            </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">Fast allocation eliminates this cost</p>
         </div>
-
-        <div 
-          onClick={() => setActiveTab("approvals")}
-          className="p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Pending Approvals</span>
-            <CheckSquare className="h-4 w-4 text-slate-400" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-slate-900">{stats.pendingApprovals}</span>
-            {stats.pendingApprovals > 0 && (
-              <span className="text-xs text-rose-700 font-medium bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/60">
-                Action Needed
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-slate-500">Awaiting manager decision</p>
-        </div>
       </div>
 
-      {/* Bench Aging Telemetry Bar (Judges LOVE this!) */}
-      <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-3">
+      {/* Bench Aging Telemetry Bar with Natural Colors */}
+      <div className="p-4.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-slate-500" />
+            <div className="p-1 rounded bg-slate-100 text-slate-700">
+              <Clock className="h-3.5 w-3.5" />
+            </div>
             <span className="font-semibold text-slate-900">Bench Aging & Placement Urgency</span>
           </div>
-          <span className="text-slate-400">Total Bench: {benchEmployees.length} Developers</span>
+          <span className="text-xs text-slate-500 font-medium">Total Bench: {benchEmployees.length} Developers</span>
         </div>
 
-        <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden">
+        <div className="w-full h-2.5 rounded-full bg-slate-100 flex overflow-hidden">
           <div
             style={{ width: `${benchEmployees.length ? (agingFresh / benchEmployees.length) * 100 : 0}%` }}
             className="bg-emerald-500 transition-all"
@@ -166,18 +180,18 @@ export default function Dashboard({
           ></div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+        <div className="flex items-center justify-between text-xs text-slate-600 pt-0.5">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-            <span>&lt;14 Days: <strong>{agingFresh}</strong></span>
+            <span>&lt;14 Days: <strong className="text-slate-900">{agingFresh}</strong></span>
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-amber-400"></span>
-            <span>15–30 Days: <strong>{agingModerate}</strong></span>
+            <span>15–30 Days: <strong className="text-slate-900">{agingModerate}</strong></span>
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-            <span>&gt;30 Days (Critical to place): <strong>{agingCritical}</strong></span>
+            <span>&gt;30 Days (Critical to place): <strong className="text-slate-900">{agingCritical}</strong></span>
           </span>
         </div>
       </div>
@@ -185,15 +199,15 @@ export default function Dashboard({
       {/* Two-Column Working Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bench List */}
-        <div className="rounded-lg bg-white border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="rounded-xl bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Priority Bench Talent</h2>
               <p className="text-xs text-slate-500">Ranked by bench duration to reduce idle costs</p>
             </div>
             <button
               onClick={() => setActiveTab("employees")}
-              className="text-xs text-slate-600 hover:text-slate-900 font-medium inline-flex items-center gap-1"
+              className="text-xs text-blue-700 hover:text-blue-900 font-medium inline-flex items-center gap-1"
             >
               <span>View all</span>
               <ArrowRight className="h-3 w-3" />
@@ -202,12 +216,12 @@ export default function Dashboard({
 
           <div className="divide-y divide-slate-100">
             {benchEmployees.slice(0, 4).map((emp) => (
-              <div key={emp.id} className="p-4 flex items-center justify-between gap-4">
+              <div key={emp.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p 
                       onClick={() => onSelectEmployee(emp)}
-                      className="text-sm font-medium text-slate-900 hover:underline cursor-pointer truncate"
+                      className="text-sm font-semibold text-slate-900 hover:text-blue-700 cursor-pointer truncate"
                     >
                       {emp.name}
                     </p>
@@ -215,9 +229,9 @@ export default function Dashboard({
                     <span className="text-xs text-slate-500">{emp.experienceYears}y exp</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">{emp.role}</p>
-                  <div className="flex flex-wrap gap-1 mt-1.5">
+                  <div className="flex flex-wrap gap-1 mt-2">
                     {emp.skills.slice(0, 3).map((s) => (
-                      <span key={s.name} className="px-1.5 py-0.5 text-[11px] rounded bg-slate-100 text-slate-700">
+                      <span key={s.name} className={`px-2 py-0.5 text-[11px] rounded font-medium border ${getSkillBadgeClass(s.name)}`}>
                         {s.name}
                       </span>
                     ))}
@@ -227,13 +241,13 @@ export default function Dashboard({
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right text-xs hidden sm:block">
                     <span className="text-slate-400 block text-[10px]">Bench time</span>
-                    <span className="font-semibold text-slate-800">{getDaysOnBench(emp.benchSince)}d</span>
+                    <span className="font-semibold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      {getDaysOnBench(emp.benchSince)}d
+                    </span>
                   </div>
                   <button
-                    onClick={() => {
-                      onSelectEmployee(emp);
-                    }}
-                    className="px-2.5 py-1 text-xs rounded border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition-colors cursor-pointer"
+                    onClick={() => onSelectEmployee(emp)}
+                    className="px-2.5 py-1 text-xs rounded border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium transition-colors cursor-pointer"
                   >
                     Inspect
                   </button>
@@ -244,15 +258,15 @@ export default function Dashboard({
         </div>
 
         {/* Open Projects */}
-        <div className="rounded-lg bg-white border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="rounded-xl bg-white border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Open Project Openings</h2>
               <p className="text-xs text-slate-500">Initiatives currently sourcing engineers</p>
             </div>
             <button
               onClick={() => setActiveTab("projects")}
-              className="text-xs text-slate-600 hover:text-slate-900 font-medium inline-flex items-center gap-1"
+              className="text-xs text-blue-700 hover:text-blue-900 font-medium inline-flex items-center gap-1"
             >
               <span>View all</span>
               <ArrowRight className="h-3 w-3" />
@@ -263,22 +277,24 @@ export default function Dashboard({
             {openProjects.slice(0, 4).map((proj) => {
               const unfilled = Math.max(0, proj.teamSize - (proj.allocatedCount || 0));
               return (
-                <div key={proj.id} className="p-4 flex items-center justify-between gap-4">
+                <div key={proj.id} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-900 truncate">{proj.name}</p>
-                      <span className="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{proj.name}</p>
+                      <span className="text-[11px] px-2 py-0.2 rounded bg-blue-50 text-blue-800 font-medium border border-blue-200/70">
                         {proj.client}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
                       <span>Min {proj.minExperienceYears}y exp</span>
                       <span>•</span>
-                      <span className="text-amber-800 font-medium">{unfilled} open seats</span>
+                      <span className="text-amber-800 font-medium bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/60">
+                        {unfilled} open seats
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-1 mt-1.5">
+                    <div className="flex flex-wrap gap-1 mt-2">
                       {proj.requiredSkills.slice(0, 3).map((s) => (
-                        <span key={s.name} className="px-1.5 py-0.5 text-[11px] rounded bg-slate-50 text-slate-600 border border-slate-100">
+                        <span key={s.name} className={`px-2 py-0.5 text-[11px] rounded font-medium border ${getSkillBadgeClass(s.name)}`}>
                           {s.name}
                         </span>
                       ))}
@@ -290,7 +306,7 @@ export default function Dashboard({
                       setSelectedProjectForMatch(proj.id);
                       setActiveTab("matching");
                     }}
-                    className="px-2.5 py-1 text-xs rounded bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors shrink-0 cursor-pointer"
+                    className="px-3 py-1.5 text-xs rounded-md bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors shrink-0 cursor-pointer shadow-xs"
                   >
                     Match Talent
                   </button>

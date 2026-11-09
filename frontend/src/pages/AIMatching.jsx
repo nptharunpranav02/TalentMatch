@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Check, CheckCircle2, UserCheck, AlertCircle, SlidersHorizontal, ArrowLeftRight, Eye } from "lucide-react";
-import { api, calculateMatchScore } from "../services/api";
+import { Check, CheckCircle2, UserCheck, AlertCircle, SlidersHorizontal, ArrowLeftRight, Eye, Sparkles } from "lucide-react";
+import { api } from "../services/api";
 
 export default function AIMatching({
   projects,
@@ -15,7 +15,6 @@ export default function AIMatching({
   const [proposedMap, setProposedMap] = useState({});
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Real-time interactive weight tuning
   const [showWeightTuner, setShowWeightTuner] = useState(false);
   const [weights, setWeights] = useState({
     skillWeight: 60,
@@ -34,10 +33,7 @@ export default function AIMatching({
   const fetchRecommendations = async (projId) => {
     setLoading(true);
     try {
-      // Fetch base recs and apply live weight tuning
       const baseRecs = await api.getRecommendations(projId);
-      
-      // Re-calculate with current custom weights
       const totalWeight = weights.skillWeight + weights.experienceWeight + weights.interestWeight;
       const normalized = baseRecs.map((item) => {
         const emp = item.employee;
@@ -108,14 +104,14 @@ export default function AIMatching({
     <div className="space-y-5">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-medium shadow-lg animate-in fade-in">
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xl border border-slate-700 animate-in fade-in">
           <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Header & Controls Bar */}
-      <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-4">
+      <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Candidate Matching</h1>
@@ -124,17 +120,17 @@ export default function AIMatching({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            {/* Weight Tuner Toggle */}
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {/* Weight Tuner Toggle with Organic Teal/Blue Accent */}
             <button
               onClick={() => setShowWeightTuner(!showWeightTuner)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                 showWeightTuner
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                  ? "bg-blue-900 text-white border border-blue-900 shadow-xs"
+                  : "bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100"
               }`}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-3.5 w-3.5 text-blue-600" />
               <span>Tune Match Weights</span>
             </button>
 
@@ -153,7 +149,7 @@ export default function AIMatching({
             <select
               value={currentProject?.id || ""}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:border-slate-400"
+              className="px-3 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:outline-none focus:border-blue-400"
             >
               {projects.map((proj) => (
                 <option key={proj.id} value={proj.id}>
@@ -164,24 +160,24 @@ export default function AIMatching({
           </div>
         </div>
 
-        {/* Real-time Weight Tuning Panel (Hackathon Winner Feature!) */}
+        {/* Real-time Weight Tuning Panel */}
         {showWeightTuner && (
-          <div className="pt-3 border-t border-slate-100 p-3 rounded-md bg-slate-50 border border-slate-200/80 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between text-xs mb-3">
-              <span className="font-semibold text-slate-800">Live Match Algorithm Weighting</span>
+          <div className="pt-3 border-t border-slate-100 p-3.5 rounded-lg bg-blue-50/50 border border-blue-100 text-xs animate-in fade-in duration-150">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-semibold text-blue-950">Interactive Matching Weights</span>
               <button
                 onClick={() => setWeights({ skillWeight: 60, experienceWeight: 25, interestWeight: 15 })}
-                className="text-[11px] text-slate-500 hover:text-slate-800 underline"
+                className="text-[11px] text-blue-700 hover:text-blue-900 underline"
               >
                 Reset to Default
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <div className="flex justify-between text-slate-600 mb-1">
+                <div className="flex justify-between text-slate-700 mb-1">
                   <span>Skill Coverage</span>
-                  <span className="font-semibold text-slate-900">{weights.skillWeight}%</span>
+                  <span className="font-bold text-blue-900">{weights.skillWeight}%</span>
                 </div>
                 <input
                   type="range"
@@ -189,14 +185,14 @@ export default function AIMatching({
                   max="80"
                   value={weights.skillWeight}
                   onChange={(e) => setWeights({ ...weights, skillWeight: Number(e.target.value) })}
-                  className="w-full accent-slate-900 cursor-pointer"
+                  className="w-full accent-blue-700 cursor-pointer"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between text-slate-600 mb-1">
+                <div className="flex justify-between text-slate-700 mb-1">
                   <span>Experience Threshold</span>
-                  <span className="font-semibold text-slate-900">{weights.experienceWeight}%</span>
+                  <span className="font-bold text-blue-900">{weights.experienceWeight}%</span>
                 </div>
                 <input
                   type="range"
@@ -204,14 +200,14 @@ export default function AIMatching({
                   max="50"
                   value={weights.experienceWeight}
                   onChange={(e) => setWeights({ ...weights, experienceWeight: Number(e.target.value) })}
-                  className="w-full accent-slate-900 cursor-pointer"
+                  className="w-full accent-blue-700 cursor-pointer"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between text-slate-600 mb-1">
-                  <span>Career Interest Alignment</span>
-                  <span className="font-semibold text-slate-900">{weights.interestWeight}%</span>
+                <div className="flex justify-between text-slate-700 mb-1">
+                  <span>Career Alignment</span>
+                  <span className="font-bold text-blue-900">{weights.interestWeight}%</span>
                 </div>
                 <input
                   type="range"
@@ -219,7 +215,7 @@ export default function AIMatching({
                   max="35"
                   value={weights.interestWeight}
                   onChange={(e) => setWeights({ ...weights, interestWeight: Number(e.target.value) })}
-                  className="w-full accent-slate-900 cursor-pointer"
+                  className="w-full accent-blue-700 cursor-pointer"
                 />
               </div>
             </div>
@@ -227,30 +223,30 @@ export default function AIMatching({
         )}
       </div>
 
-      {/* Current Project Requirements Summary */}
+      {/* Target Project Summary Bar */}
       {currentProject && (
-        <div className="p-3.5 rounded-lg bg-slate-100/80 border border-slate-200/80 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3.5 rounded-xl bg-slate-900 text-white text-xs flex flex-wrap items-center justify-between gap-3 shadow-2xs">
           <div>
-            <span className="text-slate-400 font-medium">Evaluating requirements for: </span>
-            <strong className="text-slate-900">{currentProject.name}</strong>
+            <span className="text-slate-400 font-medium">Evaluating bench talent for: </span>
+            <strong className="text-white text-sm ml-1">{currentProject.name}</strong>
           </div>
-          <div className="flex items-center gap-4 text-slate-600">
-            <span>Min Exp: <strong className="text-slate-900">{currentProject.minExperienceYears} yrs</strong></span>
+          <div className="flex items-center gap-4 text-slate-300">
+            <span>Min Exp: <strong className="text-white">{currentProject.minExperienceYears} yrs</strong></span>
             <span>•</span>
-            <span>Unfilled: <strong className="text-slate-900">{Math.max(0, currentProject.teamSize - (currentProject.allocatedCount || 0))} seats</strong></span>
+            <span>Unfilled: <strong className="text-emerald-400 font-bold">{Math.max(0, currentProject.teamSize - (currentProject.allocatedCount || 0))} seats</strong></span>
             <span>•</span>
-            <span>Stack: <strong className="text-slate-900">{(currentProject.requiredSkills || []).map((s) => s.name).join(", ")}</strong></span>
+            <span>Stack: <strong className="text-sky-300">{(currentProject.requiredSkills || []).map((s) => s.name).join(", ")}</strong></span>
           </div>
         </div>
       )}
 
       {/* Ranked Candidate List */}
       {loading ? (
-        <div className="p-12 text-center bg-white rounded-lg border border-slate-200">
-          <p className="text-xs text-slate-500 font-medium">Recalculating candidate compatibility...</p>
+        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
+          <p className="text-xs text-slate-500 font-medium">Calculating candidate compatibility...</p>
         </div>
       ) : recommendations.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-lg border border-slate-200">
+        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
           <AlertCircle className="h-8 w-8 text-slate-300 mx-auto mb-2" />
           <h3 className="text-xs font-medium text-slate-700">No bench candidates currently available</h3>
           <p className="text-[11px] text-slate-400 mt-0.5">All engineers are currently allocated.</p>
@@ -261,23 +257,35 @@ export default function AIMatching({
             const { employee, aiMatchScore, aiExplanation, matchingSkills, missingSkills } = item;
             const isProposed = proposedMap[employee.id];
 
+            // Natural organic score badge styling
+            const scoreClass =
+              aiMatchScore >= 90
+                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                : aiMatchScore >= 75
+                ? "bg-blue-50 text-blue-800 border-blue-300"
+                : "bg-amber-50 text-amber-800 border-amber-300";
+
             return (
               <div
                 key={employee.id}
-                className="p-5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-5"
+                className={`p-5 rounded-xl bg-white border transition-all shadow-2xs hover:shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 ${
+                  index === 0 ? "border-blue-200 ring-1 ring-blue-100" : "border-slate-200/90 hover:border-slate-300"
+                }`}
               >
                 {/* Left: Candidate & Breakdown */}
                 <div className="space-y-2.5 flex-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="flex items-center justify-center h-6 w-6 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
-                        {index + 1}
+                      <span className={`flex items-center justify-center h-6 w-6 rounded text-xs font-bold ${
+                        index === 0 ? "bg-blue-900 text-white" : "bg-slate-100 text-slate-700"
+                      }`}>
+                        #{index + 1}
                       </span>
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 
                             onClick={() => onOpenCandidateDrawer(employee)}
-                            className="text-sm font-semibold text-slate-900 hover:underline cursor-pointer"
+                            className="text-sm font-semibold text-slate-900 hover:text-blue-700 cursor-pointer"
                           >
                             {employee.name}
                           </h3>
@@ -292,15 +300,15 @@ export default function AIMatching({
 
                     <button
                       onClick={() => onOpenCandidateDrawer(employee)}
-                      className="text-xs text-slate-500 hover:text-slate-900 inline-flex items-center gap-1 font-medium"
+                      className="text-xs text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 font-semibold cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      <span>Details</span>
+                      <span>Inspect Profile</span>
                     </button>
                   </div>
 
                   {/* Factual explanation */}
-                  <div className="p-2.5 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700">
+                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-700">
                     <p className="leading-relaxed">{aiExplanation}</p>
                   </div>
 
@@ -327,8 +335,8 @@ export default function AIMatching({
                   </div>
                 </div>
 
-                {/* Right: Score & Propose Button */}
-                <div className="md:w-48 flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50/80 border border-slate-100 shrink-0">
+                {/* Right: Score Gauge & Propose Button */}
+                <div className="md:w-48 flex flex-col items-center justify-center p-3.5 rounded-lg bg-slate-50/80 border border-slate-100 shrink-0">
                   <div className="text-center">
                     <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">
                       Compatibility
@@ -336,18 +344,25 @@ export default function AIMatching({
                     <span className="text-2xl font-bold text-slate-900">{aiMatchScore}%</span>
                   </div>
 
+                  <div className="mt-1">
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${scoreClass}`}>
+                      {aiMatchScore >= 90 ? "Excellent Fit" : aiMatchScore >= 75 ? "Strong Candidate" : "Viable Match"}
+                    </span>
+                  </div>
+
                   <div className="w-full mt-3">
                     {isProposed ? (
                       <button
                         disabled
-                        className="w-full py-1.5 px-3 rounded-md bg-slate-200 text-slate-600 text-xs font-medium cursor-not-allowed"
+                        className="w-full py-1.5 px-3 rounded-md bg-emerald-100 text-emerald-900 text-xs font-semibold cursor-not-allowed flex items-center justify-center gap-1"
                       >
+                        <Check className="h-3.5 w-3.5 text-emerald-700" />
                         Proposed
                       </button>
                     ) : (
                       <button
                         onClick={() => handlePropose(item)}
-                        className="w-full py-1.5 px-3 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer"
+                        className="w-full py-1.5 px-3 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer shadow-xs"
                       >
                         Propose Candidate
                       </button>

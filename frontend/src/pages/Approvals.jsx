@@ -38,7 +38,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
     <div className="space-y-5">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-medium shadow-lg">
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 text-white text-xs font-semibold shadow-xl border border-slate-700 animate-in fade-in">
           <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -53,28 +53,28 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
           </p>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 text-xs font-medium">
+        {/* Tab Toggle with Natural Amber Highlights */}
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-medium shadow-2xs">
           <button
             onClick={() => setActiveTab("PENDING")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors cursor-pointer ${
               activeTab === "PENDING"
-                ? "bg-slate-100 text-slate-900 font-semibold"
+                ? "bg-slate-900 text-white font-semibold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <span>Pending</span>
             {pendingAllocations.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded text-[11px] font-semibold bg-amber-100 text-amber-800">
+              <span className="px-1.5 py-0.2 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                 {pendingAllocations.length}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab("HISTORY")}
-            className={`px-3 py-1 rounded transition-colors ${
+            className={`px-3 py-1 rounded-md transition-colors cursor-pointer ${
               activeTab === "HISTORY"
-                ? "bg-slate-100 text-slate-900 font-semibold"
+                ? "bg-slate-900 text-white font-semibold"
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
@@ -85,14 +85,14 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
 
       {/* List */}
       {displayed.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-lg border border-slate-200">
-          <CheckCircle2 className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-medium text-slate-700">
-            {activeTab === "PENDING" ? "No pending allocations" : "No review history yet"}
+        <div className="p-12 text-center bg-white rounded-xl border border-slate-200 shadow-2xs">
+          <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+          <h3 className="text-sm font-semibold text-slate-800">
+            {activeTab === "PENDING" ? "All caught up! Zero pending allocations" : "No review history recorded yet"}
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             {activeTab === "PENDING"
-              ? "Proposals submitted from the Matching tab will appear here for review."
+              ? "Proposals submitted from the Matching tab will appear here for managerial sign-off."
               : "Decisions made on allocations will be archived here."}
           </p>
         </div>
@@ -106,37 +106,37 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
             return (
               <div
                 key={alloc.id}
-                className="p-5 rounded-lg bg-white border border-slate-200 space-y-3"
+                className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-3"
               >
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-900 text-sm">{alloc.employeeName}</span>
-                      <span className="text-xs text-slate-400">assigned to</span>
-                      <span className="font-semibold text-slate-900 text-sm">{alloc.projectName}</span>
+                      <span className="text-xs text-slate-400">→</span>
+                      <span className="font-semibold text-blue-900 text-sm">{alloc.projectName}</span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-500 mt-0.5">
                       Role: {alloc.employeeRole} • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
                       Match: {alloc.aiMatchScore}%
                     </span>
                     {isPending && (
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                        Pending
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        Pending Sign-off
                       </span>
                     )}
                     {isApproved && (
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
                         Approved
                       </span>
                     )}
                     {isRejected && (
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
                         Rejected
                       </span>
                     )}
@@ -144,45 +144,45 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                 </div>
 
                 {/* Match Summary */}
-                <div className="p-2.5 rounded bg-slate-50 border border-slate-100 text-xs text-slate-700">
-                  <p>{alloc.aiExplanation}</p>
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-700">
+                  <p className="leading-relaxed">{alloc.aiExplanation}</p>
                 </div>
 
-                {/* Actions */}
+                {/* Actions with Natural Colors */}
                 {isPending ? (
                   <div className="pt-1 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <input
                       type="text"
-                      placeholder="Add manager notes (optional)..."
+                      placeholder="Add manager notes or onboarding instructions (optional)..."
                       value={notesMap[alloc.id] || ""}
                       onChange={(e) =>
                         setNotesMap({ ...notesMap, [alloc.id]: e.target.value })
                       }
-                      className="w-full sm:w-2/3 px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-slate-400 bg-white"
+                      className="w-full sm:w-2/3 px-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-none focus:border-blue-400 bg-white"
                     />
 
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <button
                         disabled={processingId === alloc.id}
                         onClick={() => handleReview(alloc.id, "REJECTED")}
-                        className="px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-md border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
                       >
                         Reject
                       </button>
                       <button
                         disabled={processingId === alloc.id}
                         onClick={() => handleReview(alloc.id, "APPROVED")}
-                        className="px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors cursor-pointer"
+                        className="px-4 py-1.5 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                       >
                         Approve Allocation
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400 flex items-center justify-between pt-1">
+                  <div className="text-xs text-slate-500 flex items-center justify-between pt-1">
                     <span>Reviewed: {new Date(alloc.reviewedAt || alloc.proposedAt).toLocaleDateString()}</span>
                     {alloc.managerNotes && (
-                      <span className="text-slate-600">Note: {alloc.managerNotes}</span>
+                      <span className="text-slate-700 font-medium italic">Note: "{alloc.managerNotes}"</span>
                     )}
                   </div>
                 )}
