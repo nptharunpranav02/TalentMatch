@@ -611,7 +611,7 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
 
                         <td className="px-5 py-3">
                           <div className="flex flex-wrap gap-1 max-w-xs">
-                            {emp.skills.slice(0, 3).map((s) => (
+                            {(emp.skills || []).slice(0, 3).map((s) => (
                               <span key={s.name} className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${badgeStyles.technicalSkill}`}>
                                 {s.name}
                               </span>
@@ -749,7 +749,7 @@ export default function Employees({ employees, onOpenAddEmployee, setActiveTab, 
                         Technical Competencies
                       </span>
                       <div className="flex flex-wrap gap-1.5">
-                        {emp.skills.slice(0, 4).map((skill) => (
+                        {(emp.skills || []).slice(0, 4).map((skill) => (
                           <span
                             key={skill.name}
                             className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${badgeStyles.technicalSkill}`}

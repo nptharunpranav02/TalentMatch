@@ -4,7 +4,7 @@ const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
 // Bump to v6 to auto-migrate browser to complete enterprise dossier and upskilling schema
-const STORAGE_VERSION = "v7";
+const STORAGE_VERSION = "v8";
 
 const loadStorage = (key, fallback) => {
   const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;

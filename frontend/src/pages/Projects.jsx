@@ -504,7 +504,7 @@ export default function Projects({
                       Required Competencies
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {proj.requiredSkills.map((req) => (
+                      {(proj.requiredSkills || []).map((req) => (
                         <span
                           key={req.name}
                           className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${badgeStyles.requiredSkill}`}

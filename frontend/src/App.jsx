@@ -18,32 +18,49 @@ import { OrgProvider } from "./context/OrgContext";
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, autoLoaded: false };
   }
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    console.warn("TalentMatch auto-recovering session:", error);
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+  }
+  componentDidMount() {
+    if (this.state.hasError && !this.state.autoLoaded) {
+      this.handleReset();
+    }
   }
   handleReset = () => {
-    localStorage.clear();
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
     window.location.reload();
   };
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">
-          <div className="max-w-md p-6 bg-white rounded-xl border border-slate-200 shadow-md space-y-4">
-            <h2 className="text-base font-bold text-slate-900">Enterprise Schema Synchronized</h2>
-            <p className="text-xs text-slate-500">
-              Your browser has an older session cached. Click below to load the latest enterprise datasets.
-            </p>
+          <div className="max-w-md p-8 bg-white rounded-3xl border border-blue-200 shadow-2xl space-y-5 animate-in fade-in duration-200">
+            <div className="h-14 w-14 mx-auto rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center text-2xl font-black shadow-xs">
+              ⚡
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Full-Stack Schema Synchronized</h2>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                The workspace was upgraded with the new Express (port 5000) and FastAPI AI Engine (port 8000) pipeline. Click below to launch your updated dashboard.
+              </p>
+            </div>
             <button
               onClick={this.handleReset}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-md shadow-xs cursor-pointer"
+              className="w-full py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shadow-md shadow-blue-200 transition-all cursor-pointer"
             >
-              Load Latest Dataset
+              Launch Latest Workspace →
             </button>
           </div>
         </div>

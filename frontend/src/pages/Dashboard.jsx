@@ -355,7 +355,7 @@ export default function Dashboard({
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
-                        {emp.skills.slice(0, 3).map((s) => (
+                        {(emp.skills || []).slice(0, 3).map((s) => (
                           <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.technicalSkill}`}>
                             {s.name}
                           </span>
@@ -433,7 +433,7 @@ export default function Dashboard({
                       </div>
 
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
-                        {proj.requiredSkills.slice(0, 3).map((s) => (
+                        {(proj.requiredSkills || []).slice(0, 3).map((s) => (
                           <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.requiredSkill}`}>
                             {s.name}
                           </span>
