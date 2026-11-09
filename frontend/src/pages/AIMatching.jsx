@@ -283,6 +283,7 @@ export default function AIMatching({
               skillComparison,
               matchingSkills,
               missingSkills,
+              upskillingPlan = [],
               experienceComparison,
               availabilityComparison,
               aspirationComparison,
@@ -427,7 +428,42 @@ export default function AIMatching({
                     </div>
                   </div>
 
-                  {/* 1.2: Dimensions Comparison (Experience, Availability, Career Interest) */}
+                  {/* 3.4: Skill Gap Analysis & Recommended Upskilling Plan */}
+                  {missingSkills && missingSkills.length > 0 && upskillingPlan.length > 0 && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border border-amber-300 shadow-2xs space-y-2.5">
+                      <div className="flex items-center justify-between text-xs flex-wrap gap-1">
+                        <div className="flex items-center gap-1.5 font-extrabold text-amber-900 uppercase tracking-wider text-[11px]">
+                          <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
+                          <span>Skill Gap Analysis & Targeted Upskilling Plan</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300">
+                          {missingSkills.length} Competenc{missingSkills.length > 1 ? "ies" : "y"} To Upskill
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {upskillingPlan.map((plan) => (
+                          <div 
+                            key={plan.skill}
+                            className="p-2.5 rounded-lg bg-white border border-amber-200/80 shadow-2xs space-y-1"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-extrabold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded text-[10px] border border-rose-200">
+                                Gap: {plan.skill}
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                                {plan.duration}
+                              </span>
+                            </div>
+                            <p className="font-extrabold text-slate-900 text-xs">{plan.title}</p>
+                            <span className="text-[10px] text-slate-400 font-medium block">
+                              Provider: {plan.provider}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                     {/* Experience Dimension */}
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">

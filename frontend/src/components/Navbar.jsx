@@ -23,29 +23,51 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
     { id: "approvals", label: "Approvals", icon: CheckSquare, badge: pendingCount }
   ];
 
+  // 3.5: Enterprise Workforce Alerts
   const notifications = [
     {
       id: "notif-1",
-      title: "Allocation Pending Sign-off",
-      desc: "Elena Rostova proposed for Clinical Summary AI Pod",
+      title: "Allocation Awaiting Managerial Sign-off",
+      desc: "Elena Rostova proposed for Clinical Summary AI Pod (92% Match)",
       time: "10m ago",
       targetTab: "approvals",
+      actionText: "Review Proposal",
       unread: true
     },
     {
       id: "notif-2",
-      title: "Critical Bench Duration Alert",
-      desc: "David Okafor has reached 42 days idle on bench",
-      time: "1h ago",
+      title: "Critical Bench Duration Alert (>45 Days)",
+      desc: "David Okafor has been on bench for 46 days (Critical Cost Overhead)",
+      time: "25m ago",
       targetTab: "employees",
+      actionText: "View Dossier",
       unread: true
     },
     {
       id: "notif-3",
-      title: "SOW Capacity Milestone",
-      desc: "Core Banking Engine is 1/4 staffed with L6 Architect",
-      time: "3h ago",
+      title: "Skills Demand Spike: Python Developers",
+      desc: "Three active project engagements require senior Python & PyTorch engineers",
+      time: "1h ago",
+      targetTab: "matching",
+      actionText: "Run AI Match",
+      unread: true
+    },
+    {
+      id: "notif-4",
+      title: "Project Milestone & Roll-off in 14 Days",
+      desc: "Kenji Takahashi's Core Banking Phase 1 milestone completes in 14 days",
+      time: "2h ago",
       targetTab: "projects",
+      actionText: "Inspect SOW",
+      unread: false
+    },
+    {
+      id: "notif-5",
+      title: "Unfilled SOW Pod Positions",
+      desc: "Core Banking & UPI Payments Engine has 3 unfilled engineering positions",
+      time: "4h ago",
+      targetTab: "projects",
+      actionText: "Fill Capacity",
       unread: false
     }
   ];
@@ -231,7 +253,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                         <span className="font-extrabold text-slate-900">Workforce Notifications</span>
                       </div>
                       <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                        2 unread
+                        3 unread
                       </span>
                     </div>
 
@@ -247,6 +269,14 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                             <span className="text-[10px] text-slate-400 whitespace-nowrap">{n.time}</span>
                           </div>
                           <p className="text-[11px] text-slate-600 mt-0.5 font-medium leading-relaxed">{n.desc}</p>
+                          {n.actionText && (
+                            <div className="mt-1.5 flex justify-end">
+                              <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100 hover:bg-blue-200 px-2 py-0.5 rounded-md border border-blue-200 inline-flex items-center gap-1">
+                                <span>{n.actionText}</span>
+                                <span>→</span>
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

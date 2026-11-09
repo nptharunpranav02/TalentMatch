@@ -8,6 +8,7 @@ import Approvals from "./pages/Approvals";
 import AddEmployeeModal from "./components/AddEmployeeModal";
 import AddProjectModal from "./components/AddProjectModal";
 import CandidateDrawer from "./components/CandidateDrawer";
+import EmployeeDossierModal from "./components/EmployeeDossierModal";
 import CandidateCompareModal from "./components/CandidateCompareModal";
 import CommandPalette from "./components/CommandPalette";
 import { api } from "./services/api";
@@ -153,6 +154,7 @@ function TalentMatchMain() {
             allocations={allocations}
             setActiveTab={setActiveTab}
             setSelectedProjectForMatch={setSelectedProjectForMatch}
+            onSelectEmployee={(emp) => setDrawerEmployee(emp)}
             onOpenAddEmployee={() => setIsAddEmployeeOpen(true)}
             onOpenAddProject={() => setIsAddProjectOpen(true)}
             onSelectEmployee={(emp) => setDrawerEmployee(emp)}
@@ -175,6 +177,7 @@ function TalentMatchMain() {
             onOpenAddProject={() => setIsAddProjectOpen(true)}
             setActiveTab={setActiveTab}
             setSelectedProjectForMatch={setSelectedProjectForMatch}
+            onSelectEmployee={(emp) => setDrawerEmployee(emp)}
           />
         )}
 
@@ -216,12 +219,13 @@ function TalentMatchMain() {
         </div>
       </footer>
 
-      {/* Slide-over Profile Drawer */}
-      <CandidateDrawer
+      {/* 3.1: Enterprise Employee Dossier Modal */}
+      <EmployeeDossierModal
         employee={drawerEmployee}
         isOpen={Boolean(drawerEmployee)}
         onClose={() => setDrawerEmployee(null)}
-        onMatchProject={() => {
+        onSelectProjectForMatch={(projId) => {
+          setSelectedProjectForMatch(projId);
           setActiveTab("matching");
         }}
       />

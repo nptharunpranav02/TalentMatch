@@ -1,6 +1,10 @@
 import React from "react";
-import { Users, Briefcase, CheckSquare, Plus, ArrowRight, Clock, Sparkles, TrendingUp, ShieldCheck, MapPin, Award, DollarSign } from "lucide-react";
+import { 
+  Users, Briefcase, CheckSquare, Plus, ArrowRight, Clock, Sparkles, 
+  TrendingUp, ShieldCheck, MapPin, Award, DollarSign, AlertTriangle, AlertCircle, Eye 
+} from "lucide-react";
 import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
+import { getBenchRiskTier } from "../services/mockData";
 import { useOrg } from "../context/OrgContext";
 
 export default function Dashboard({
@@ -32,9 +36,13 @@ export default function Dashboard({
   const monthlyBenchRunRateUSD = benchEmployees.length * baseIdleCostPerDayUSD * 22;
   const potentialMonthlyRevenueRecoveryUSD = benchEmployees.length * 15000;
 
-  const agingFresh = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) <= 14).length;
-  const agingModerate = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 14 && getDaysOnBench(e.benchSince) <= 30).length;
-  const agingCritical = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 30).length;
+  // 3.3: 4-Tier Bench Aging Risk Calculations
+  const agingNormal = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) <= 15).length;
+  const agingAttention = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 15 && getDaysOnBench(e.benchSince) <= 30).length;
+  const agingHigh = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 30 && getDaysOnBench(e.benchSince) <= 45).length;
+  const agingCritical = benchEmployees.filter((e) => getDaysOnBench(e.benchSince) > 45).length;
+
+  const totalAtRisk = agingHigh + agingCritical;
 
   return (
     <div className="space-y-6">
@@ -47,7 +55,7 @@ export default function Dashboard({
               {orgName}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Real-time bench workforce telemetry, cost burn mitigation, and skill allocation throughput.
           </p>
         </div>
@@ -98,127 +106,196 @@ export default function Dashboard({
         >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span className="text-amber-900 font-bold tracking-tight">Active Bench Roster</span>
-            <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shadow-2xs group-hover:scale-105 transition-transform">
-              <Users className="h-4.5 w-4.5" />
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-700 group-hover:scale-110 transition-transform">
+              <Clock className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">{stats.benchCount}</span>
-            <span className="text-xs text-amber-900 font-bold bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-              Avg {avgBenchDays}d idle
+            <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.benchCount}</span>
+            <span className="text-xs font-bold text-amber-800">
+              {stats.totalEmployees > 0 ? Math.round((stats.benchCount / stats.totalEmployees) * 100) : 0}% of Total
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500 font-medium">Ready for project deployment</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Avg Bench Duration: {avgBenchDays} Days</p>
         </div>
 
-        {/* Allocated Billable Talent - Bright Mint Emerald */}
+        {/* Assigned Engineers - Vivid Emerald Green */}
         <div 
           onClick={() => setActiveTab("employees")}
           className="p-5 rounded-2xl bg-gradient-to-br from-white via-white to-emerald-50/60 border border-emerald-200/90 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span className="text-emerald-900 font-bold tracking-tight">Billable Utilization</span>
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 shadow-2xs group-hover:scale-105 transition-transform">
-              <TrendingUp className="h-4.5 w-4.5" />
+            <span className="text-emerald-900 font-bold tracking-tight">Billable Allocated</span>
+            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 group-hover:scale-110 transition-transform">
+              <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900">
-              {stats.totalEmployees > 0 ? Math.round((stats.allocatedCount / stats.totalEmployees) * 100) : 0}%
-            </span>
-            <span className="text-xs text-emerald-900 font-bold bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
-              {stats.allocatedCount} of {stats.totalEmployees} Active
+            <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.allocatedCount}</span>
+            <span className="text-xs font-bold text-emerald-800">
+              {stats.totalEmployees > 0 ? Math.round((stats.allocatedCount / stats.totalEmployees) * 100) : 0}% Utilized
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-500 font-medium">Target company utilization: 85%</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Active on Client Deliverables</p>
         </div>
 
-        {/* Monthly Bench Idle Cost Burn - Vibrant Ruby / Coral */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-white via-white to-rose-50/60 border border-rose-200/90 border-t-4 border-t-rose-500 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span className="text-rose-900 font-bold tracking-tight">Monthly Bench Cost Burn</span>
-            <div className="p-2 rounded-xl bg-rose-100 text-rose-800 font-extrabold text-xs shadow-2xs">
-              {currency.symbol}
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-rose-600">{formatMoney(monthlyBenchRunRateUSD)}</span>
-            <span className="text-xs text-rose-900 font-bold bg-rose-100 px-2 py-0.5 rounded-full border border-rose-300">
-              idle burn
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500 font-medium">{formatMoney(baseIdleCostPerDayUSD)}/day per unassigned engineer</p>
-        </div>
-
-        {/* Billable Revenue Recovery Potential - Electric Sapphire Blue */}
+        {/* Active Client SOWs - Royal Indigo/Blue */}
         <div 
-          onClick={() => setActiveTab("matching")}
+          onClick={() => setActiveTab("projects")}
           className="p-5 rounded-2xl bg-gradient-to-br from-white via-white to-blue-50/60 border border-blue-200/90 border-t-4 border-t-blue-600 shadow-sm hover:shadow-md transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span className="text-blue-900 font-bold tracking-tight">Revenue Recovery Target</span>
-            <div className="p-2 rounded-xl bg-blue-100 text-blue-800 shadow-2xs group-hover:scale-105 transition-transform">
-              <Briefcase className="h-4.5 w-4.5" />
+            <span className="text-blue-900 font-bold tracking-tight">Open SOW Engagements</span>
+            <div className="p-2 rounded-xl bg-blue-100 text-blue-700 group-hover:scale-110 transition-transform">
+              <Briefcase className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-blue-700">{formatMoney(potentialMonthlyRevenueRecoveryUSD, { compact: true })}</span>
-            <span className="text-xs text-blue-900 font-bold bg-blue-100 px-2 py-0.5 rounded-full border border-blue-300">
-              / month
+            <span className="text-3xl font-black text-slate-900 tracking-tight">{stats.activeProjects}</span>
+            <span className="text-xs font-bold text-blue-700">of {stats.totalProjects} SOWs Active</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Ready for AI Talent Sourcing</p>
+        </div>
+
+        {/* Financial Value Metric - Crisp Violet */}
+        <div 
+          onClick={() => setActiveTab("matching")}
+          className="p-5 rounded-2xl bg-gradient-to-br from-white via-white to-indigo-50/60 border border-indigo-200/90 border-t-4 border-t-indigo-600 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span className="text-indigo-900 font-bold tracking-tight">Recoverable Billable Run-rate</span>
+            <div className="p-2 rounded-xl bg-indigo-100 text-indigo-700 group-hover:scale-110 transition-transform">
+              <DollarSign className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              {formatMoney(potentialMonthlyRevenueRecoveryUSD)}
             </span>
+            <span className="text-xs font-bold text-indigo-700">/mo</span>
           </div>
           <p className="mt-1 text-xs text-slate-500 font-medium">Unlocked upon 100% bench staffing</p>
         </div>
       </div>
 
-      {/* Bench Aging Telemetry Bar with Vibrant Segment Colors */}
-      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3.5">
-        <div className="flex items-center justify-between text-xs">
+      {/* 3.3: Enterprise Bench Duration Risk Overview (4 Configurable Tiers) */}
+      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between text-xs flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-blue-100 text-blue-700 font-bold">
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="h-4 w-4" />
             </div>
-            <span className="font-bold text-slate-900 text-sm">Workforce Bench Aging Telemetry</span>
-            <span className="text-slate-400 hidden sm:inline font-medium">(Global Enterprise Delivery Standard)</span>
+            <div>
+              <span className="font-extrabold text-slate-900 text-sm block">
+                Bench Duration Risk Overview & Aging Telemetry
+              </span>
+              <span className="text-slate-400 text-[11px] font-medium">
+                4-Tier IT Workforce Margin Risk Protocol (Standard vs Critical Idle Bands)
+              </span>
+            </div>
           </div>
-          <span className="text-xs text-slate-600 font-bold bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
-            Total Unallocated: {benchEmployees.length} Engineers
+          <span className="text-xs text-slate-700 font-bold bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+            Total Bench Pool: {benchEmployees.length} Engineers
           </span>
         </div>
 
-        <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden shadow-inner">
+        {/* 4-Tier Segmented Progress Bar */}
+        <div className="w-full h-3.5 rounded-full bg-slate-100 flex overflow-hidden shadow-inner">
           <div
-            style={{ width: `${benchEmployees.length ? (agingFresh / benchEmployees.length) * 100 : 0}%` }}
+            style={{ width: `${benchEmployees.length ? (agingNormal / benchEmployees.length) * 100 : 0}%` }}
             className="bg-emerald-500 hover:bg-emerald-400 transition-all cursor-pointer"
-            title={`0-14 days: ${agingFresh}`}
+            title={`0–15 Days (Normal): ${agingNormal}`}
           ></div>
           <div
-            style={{ width: `${benchEmployees.length ? (agingModerate / benchEmployees.length) * 100 : 0}%` }}
+            style={{ width: `${benchEmployees.length ? (agingAttention / benchEmployees.length) * 100 : 0}%` }}
             className="bg-amber-400 hover:bg-amber-300 transition-all cursor-pointer"
-            title={`15-30 days: ${agingModerate}`}
+            title={`16–30 Days (Attention Needed): ${agingAttention}`}
+          ></div>
+          <div
+            style={{ width: `${benchEmployees.length ? (agingHigh / benchEmployees.length) * 100 : 0}%` }}
+            className="bg-orange-500 hover:bg-orange-400 transition-all cursor-pointer"
+            title={`31–45 Days (High Risk): ${agingHigh}`}
           ></div>
           <div
             style={{ width: `${benchEmployees.length ? (agingCritical / benchEmployees.length) * 100 : 0}%` }}
             className="bg-rose-500 hover:bg-rose-400 transition-all cursor-pointer"
-            title={`30+ days: ${agingCritical}`}
+            title={`45+ Days (Critical Overhead): ${agingCritical}`}
           ></div>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-slate-700 pt-0.5 flex-wrap gap-2">
-          <span className="inline-flex items-center gap-2 font-medium">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-2xs"></span>
-            <span>&lt;14 Days (Standard Buffer): <strong className="text-slate-900 font-bold">{agingFresh}</strong></span>
-          </span>
-          <span className="inline-flex items-center gap-2 font-medium">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-400 shadow-2xs"></span>
-            <span>15–30 Days (Active Resourcing): <strong className="text-slate-900 font-bold">{agingModerate}</strong></span>
-          </span>
-          <span className="inline-flex items-center gap-2 font-medium">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-2xs"></span>
-            <span>&gt;30 Days (Critical Cost Overhead): <strong className="text-rose-700 font-bold">{agingCritical}</strong></span>
-          </span>
+        {/* 4-Tier Detailed Legend Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+          <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-emerald-950 text-xs">0–15 Days</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                {agingNormal} Eng
+              </span>
+            </div>
+            <strong className="text-emerald-800 text-[11px] block mt-1">Normal Buffer</strong>
+            <span className="text-[10px] text-emerald-600 block">Standard Onboarding</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-amber-950 text-xs">16–30 Days</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                {agingAttention} Eng
+              </span>
+            </div>
+            <strong className="text-amber-800 text-[11px] block mt-1">Attention Needed</strong>
+            <span className="text-[10px] text-amber-600 block">Active SOW Matching</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-orange-50/70 border border-orange-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-orange-950 text-xs">31–45 Days</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
+                {agingHigh} Eng
+              </span>
+            </div>
+            <strong className="text-orange-800 text-[11px] block mt-1">High Risk</strong>
+            <span className="text-[10px] text-orange-600 block">Staffing Escalation</span>
+          </div>
+
+          <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-rose-950 text-xs">45+ Days</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                {agingCritical} Eng
+              </span>
+            </div>
+            <strong className="text-rose-800 text-[11px] block mt-1">Critical Overhead</strong>
+            <span className="text-[10px] text-rose-600 block">Executive Priority</span>
+          </div>
         </div>
       </div>
+
+      {/* 3.3: Manager Action Alert for High Risk & Critical Overhead */}
+      {totalAtRisk > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border border-rose-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-rose-500 text-white shadow-2xs shrink-0 mt-0.5 sm:mt-0">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">
+                Executive Staffing Attention Required: {totalAtRisk} Engineers in High Risk / Critical Idle Tiers
+              </h4>
+              <p className="text-xs text-slate-600 font-medium mt-0.5">
+                Engineers idling &gt;30 days degrade margin realization. Recommend running automated AI matching to fast-track allocations.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveTab("matching")}
+            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs whitespace-nowrap self-end sm:self-auto"
+          >
+            Fast-Track AI Matching →
+          </button>
+        </div>
+      )}
 
       {/* Two-Column Working Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -240,64 +317,72 @@ export default function Dashboard({
             </div>
 
             <div className="divide-y divide-slate-100">
-              {benchEmployees.slice(0, 4).map((emp) => (
-                <div key={emp.id} className="p-4 flex items-center justify-between gap-4 hover:bg-blue-50/30 transition-colors">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                        {emp.empCode || "TM-04821"}
-                      </span>
-                      <p 
+              {benchEmployees.slice(0, 4).map((emp) => {
+                const benchDays = getDaysOnBench(emp.benchSince);
+                const risk = getBenchRiskTier(benchDays);
+                return (
+                  <div key={emp.id} className="p-4 flex items-center justify-between gap-4 hover:bg-blue-50/30 transition-colors">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                          {emp.empCode || "TM-04821"}
+                        </span>
+                        <p 
+                          onClick={() => onSelectEmployee(emp)}
+                          className="text-sm font-bold text-slate-900 hover:text-blue-600 cursor-pointer truncate"
+                        >
+                          {emp.name}
+                        </p>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] border border-slate-200">
+                          {emp.band || "L4 / Senior SDE"}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${risk.badgeClass}`}>
+                          {risk.tier}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs text-slate-500 mt-1.5 font-medium">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                          <span>{(emp.location || "Global Remote").split(",")[0]}</span>
+                        </span>
+                        <span>•</span>
+                        <span>{emp.experienceYears}y exp</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {emp.skills.slice(0, 3).map((s) => (
+                          <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.technicalSkill}`}>
+                            {s.name}
+                          </span>
+                        ))}
+                        {emp.certifications && emp.certifications.length > 0 && (
+                          <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold border inline-flex items-center gap-1 ${badgeStyles.certification}`}>
+                            <ShieldCheck className="h-3 w-3 text-purple-600" />
+                            <span>Certified</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      <div className="text-right text-xs hidden sm:block">
+                        <span className="text-slate-400 block text-[10px] font-semibold uppercase">Bench Time</span>
+                        <span className="font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                          {benchDays}d
+                        </span>
+                      </div>
+                      <button
                         onClick={() => onSelectEmployee(emp)}
-                        className="text-sm font-bold text-slate-900 hover:text-blue-600 cursor-pointer truncate"
+                        className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold transition-all cursor-pointer shadow-2xs hover:border-slate-300 inline-flex items-center gap-1"
                       >
-                        {emp.name}
-                      </p>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] border border-slate-200">
-                        {emp.band || "L4 / Senior SDE"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1.5 font-medium">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{(emp.location || "Global Remote").split(",")[0]}</span>
-                      </span>
-                      <span>•</span>
-                      <span>{emp.experienceYears}y exp</span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {emp.skills.slice(0, 3).map((s) => (
-                        <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.technicalSkill}`}>
-                          {s.name}
-                        </span>
-                      ))}
-                      {emp.certifications && emp.certifications.length > 0 && (
-                        <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold border inline-flex items-center gap-1 ${badgeStyles.certification}`}>
-                          <ShieldCheck className="h-3 w-3 text-purple-600" />
-                          <span>Certified</span>
-                        </span>
-                      )}
+                        <Eye className="h-3.5 w-3.5 text-blue-500" />
+                        <span>Dossier</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right text-xs hidden sm:block">
-                      <span className="text-slate-400 block text-[10px] font-semibold uppercase">Bench Time</span>
-                      <span className="font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
-                        {getDaysOnBench(emp.benchSince)}d
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => onSelectEmployee(emp)}
-                      className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold transition-all cursor-pointer shadow-2xs hover:border-slate-300"
-                    >
-                      Inspect
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -327,7 +412,7 @@ export default function Dashboard({
                   <div key={proj.id} className="p-4 flex items-center justify-between gap-4 hover:bg-blue-50/30 transition-colors">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-bold">
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-bold">
                           {proj.projectCode || "PRJ-GEN"}
                         </span>
                         <p className="text-sm font-bold text-slate-900 truncate">{proj.name}</p>

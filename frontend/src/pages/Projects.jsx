@@ -1,16 +1,26 @@
 import React, { useState, useMemo } from "react";
 import { 
   Plus, Search, Calendar, Users, MapPin, DollarSign, Building2, 
-  AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, Filter, RotateCcw, ChevronDown, ChevronUp 
+  AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, Filter, RotateCcw, 
+  ChevronDown, ChevronUp, FolderOpen, Eye
 } from "lucide-react";
 import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
 import { useOrg } from "../context/OrgContext";
+import ProjectDetailModal from "../components/ProjectDetailModal";
 
-export default function Projects({ projects, employees, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
+export default function Projects({
+  projects,
+  employees,
+  onOpenAddProject,
+  setActiveTab,
+  setSelectedProjectForMatch,
+  onSelectEmployee
+}) {
   const { formatMoney } = useOrg();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedProjectDetail, setSelectedProjectDetail] = useState(null);
 
   // 2.7: Advanced Filters for Projects
   const [selectedSkill, setSelectedSkill] = useState("ALL");
@@ -28,17 +38,20 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
   // Extract unique filters
   const allRequiredSkills = useMemo(() => {
     const s = new Set();
-    projects.forEach(p => (p.requiredSkills || []).forEach(sk => s.add(sk.name)));
+    projects.forEach((p) => (p.requiredSkills || []).forEach((sk) => s.add(sk.name)));
     return ["ALL", ...Array.from(s).sort()];
   }, [projects]);
 
   const allClients = useMemo(() => {
     const c = new Set();
-    projects.forEach(p => { if (p.client) c.add(p.client); });
+    projects.forEach((p) => {
+      if (p.client) c.add(p.client);
+    });
     return ["ALL", ...Array.from(c).sort()];
   }, [projects]);
 
-  const activeFilterCount = (statusFilter !== "ALL" ? 1 : 0) +
+  const activeFilterCount =
+    (statusFilter !== "ALL" ? 1 : 0) +
     (selectedSkill !== "ALL" ? 1 : 0) +
     (selectedPriority !== "ALL" ? 1 : 0) +
     (selectedClient !== "ALL" ? 1 : 0) +
@@ -56,7 +69,8 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
   const filteredProjects = useMemo(() => {
     return projects.filter((proj) => {
       const q = searchTerm.toLowerCase().trim();
-      const matchesSearch = !q ||
+      const matchesSearch =
+        !q ||
         proj.name.toLowerCase().includes(q) ||
         (proj.projectCode || "").toLowerCase().includes(q) ||
         proj.client.toLowerCase().includes(q) ||
@@ -64,8 +78,11 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
         (proj.requiredSkills || []).some((s) => s.name.toLowerCase().includes(q));
 
       const matchesStatus = statusFilter === "ALL" || proj.status === statusFilter;
-      const matchesSkill = selectedSkill === "ALL" ||
-        (proj.requiredSkills || []).some((s) => s.name.toLowerCase() === selectedSkill.toLowerCase());
+      const matchesSkill =
+        selectedSkill === "ALL" ||
+        (proj.requiredSkills || []).some(
+          (s) => s.name.toLowerCase() === selectedSkill.toLowerCase()
+        );
 
       const matchesPriority = selectedPriority === "ALL" || proj.priority === selectedPriority;
       const matchesClient = selectedClient === "ALL" || proj.client === selectedClient;
@@ -75,9 +92,24 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
       if (selectedExpFilter === "<=3") matchesExp = minExp <= 3;
       else if (selectedExpFilter === ">3") matchesExp = minExp > 3;
 
-      return matchesSearch && matchesStatus && matchesSkill && matchesPriority && matchesClient && matchesExp;
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesSkill &&
+        matchesPriority &&
+        matchesClient &&
+        matchesExp
+      );
     });
-  }, [projects, searchTerm, statusFilter, selectedSkill, selectedPriority, selectedClient, selectedExpFilter]);
+  }, [
+    projects,
+    searchTerm,
+    statusFilter,
+    selectedSkill,
+    selectedPriority,
+    selectedClient,
+    selectedExpFilter
+  ]);
 
   return (
     <div className="space-y-6">
@@ -85,13 +117,15 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Client Engagements & SOW Portfolio</h1>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Client Engagements & SOW Portfolio
+            </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs">
               {projects.length} Active SOWs
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
-            Manage project staffing quotas, monitor billable utilization rates, and allocate bench engineers.
+            Manage project staffing quotas, monitor billable utilization rates, and inspect full SOW scopes.
           </p>
         </div>
 
@@ -124,8 +158,8 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
               <button
                 onClick={() => setStatusFilter("ALL")}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  statusFilter === "ALL" 
-                    ? "bg-blue-600 text-white shadow-xs" 
+                  statusFilter === "ALL"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
@@ -134,30 +168,38 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
               <button
                 onClick={() => setStatusFilter("OPEN")}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  statusFilter === "OPEN" 
-                    ? "bg-blue-600 text-white shadow-xs" 
+                  statusFilter === "OPEN"
+                    ? "bg-blue-600 text-white shadow-xs"
                     : "text-blue-900 hover:bg-blue-50"
                 }`}
               >
                 <span>Active Sourcing</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  statusFilter === "OPEN" ? "bg-blue-700 text-white" : "bg-blue-100 text-blue-900 border border-blue-300"
-                }`}>
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    statusFilter === "OPEN"
+                      ? "bg-blue-700 text-white"
+                      : "bg-blue-100 text-blue-900 border border-blue-300"
+                  }`}
+                >
                   {projects.filter((p) => p.status === "OPEN").length}
                 </span>
               </button>
               <button
                 onClick={() => setStatusFilter("FULFILLED")}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  statusFilter === "FULFILLED" 
-                    ? "bg-emerald-600 text-white shadow-xs" 
+                  statusFilter === "FULFILLED"
+                    ? "bg-emerald-600 text-white shadow-xs"
                     : "text-emerald-900 hover:bg-emerald-50"
                 }`}
               >
                 <span>Fully Staffed</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  statusFilter === "FULFILLED" ? "bg-emerald-700 text-white" : "bg-emerald-100 text-emerald-900 border border-emerald-300"
-                }`}>
+                <span
+                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    statusFilter === "FULFILLED"
+                      ? "bg-emerald-700 text-white"
+                      : "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  }`}
+                >
                   {projects.filter((p) => p.status === "FULFILLED").length}
                 </span>
               </button>
@@ -197,13 +239,19 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
         {showAdvancedFilters && (
           <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs animate-in fade-in duration-150">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">Required Competency</label>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                Required Competency
+              </label>
               <select
                 value={selectedSkill}
                 onChange={(e) => setSelectedSkill(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 font-semibold focus:outline-none"
               >
-                {allRequiredSkills.map(s => <option key={s} value={s}>{s === "ALL" ? "All Required Skills" : s}</option>)}
+                {allRequiredSkills.map((s) => (
+                  <option key={s} value={s}>
+                    {s === "ALL" ? "All Required Skills" : s}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -227,12 +275,18 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
                 onChange={(e) => setSelectedClient(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 font-semibold focus:outline-none"
               >
-                {allClients.map(c => <option key={c} value={c}>{c === "ALL" ? "All Clients" : c}</option>)}
+                {allClients.map((c) => (
+                  <option key={c} value={c}>
+                    {c === "ALL" ? "All Clients" : c}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">Min Exp Threshold</label>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                Min Exp Threshold
+              </label>
               <select
                 value={selectedExpFilter}
                 onChange={(e) => setSelectedExpFilter(e.target.value)}
@@ -250,8 +304,22 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
       {/* 2.5: Compact, Shorter Project Cards with Clean Vertical Padding */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {filteredProjects.length === 0 ? (
-          <div className="col-span-full p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-400">
-            No project engagements match the selected filters. Try clearing search filters.
+          <div className="col-span-full p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 space-y-3">
+            <FolderOpen className="h-10 w-10 text-slate-300 mx-auto" />
+            <div>
+              <p className="font-extrabold text-sm text-slate-800">
+                No project engagements match the selected criteria.
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Try adjusting your filters, experience thresholds, or search query.
+              </p>
+            </div>
+            <button
+              onClick={resetAllFilters}
+              className="px-4 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold transition-all border border-blue-200 cursor-pointer"
+            >
+              Reset All Filters
+            </button>
           </div>
         ) : (
           filteredProjects.map((proj) => {
@@ -282,7 +350,11 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
                           <span className="truncate">{proj.client}</span>
                         </span>
                       </div>
-                      <h2 className="text-base font-extrabold text-slate-900 mt-1.5 tracking-tight group-hover:text-blue-600 transition-colors truncate">
+                      <h2 
+                        onClick={() => setSelectedProjectDetail(proj)}
+                        className="text-base font-extrabold text-slate-900 mt-1.5 tracking-tight group-hover:text-blue-600 transition-colors truncate cursor-pointer hover:underline"
+                        title="Click to view full SOW workspace & requirements"
+                      >
                         {proj.name}
                       </h2>
                       <p className="text-[11px] text-slate-500 font-medium">
@@ -315,15 +387,17 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
 
                   {/* 2.6: Description limited to 2 lines with 'View Details' expander */}
                   <div className="text-xs text-slate-600 leading-relaxed font-medium">
-                    <p className={isDescExpanded ? "" : "line-clamp-2"}>
-                      {proj.description}
-                    </p>
+                    <p className={isDescExpanded ? "" : "line-clamp-2"}>{proj.description}</p>
                     <button
                       onClick={() => toggleExpandDesc(proj.id)}
                       className="text-blue-600 hover:text-blue-800 text-[11px] font-bold inline-flex items-center gap-0.5 mt-0.5 cursor-pointer"
                     >
                       <span>{isDescExpanded ? "Show Less" : "View Full SOW Scope"}</span>
-                      {isDescExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      {isDescExpanded ? (
+                        <ChevronUp className="h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3" />
+                      )}
                     </button>
                   </div>
 
@@ -345,19 +419,31 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
                     </div>
                   </div>
 
-                  {/* 2.5: Compact Metadata Strip */}
-                  <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50 p-2 rounded-xl border border-slate-100 text-center">
+                  {/* Metadata Matrix */}
+                  <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Min Tenure</span>
-                      <strong className="text-slate-900 font-bold text-[11px]">{proj.minExperienceYears}y exp</strong>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                        Min Tenure
+                      </span>
+                      <strong className="text-slate-900 font-bold text-[11px]">
+                        {proj.minExperienceYears}y exp
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Target Band</span>
-                      <strong className="text-indigo-700 font-bold text-[11px]">{proj.targetBand || "L4+"}</strong>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                        Target Band
+                      </span>
+                      <strong className="text-indigo-700 font-bold text-[11px]">
+                        {proj.targetBand || "L4+"}
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Billing Rate</span>
-                      <strong className="text-blue-700 font-bold text-[11px]">{formatMoney(proj.monthlyRevenuePerDev || 14000)}/mo</strong>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                        Billing Rate
+                      </span>
+                      <strong className="text-blue-700 font-bold text-[11px]">
+                        {formatMoney(proj.monthlyRevenuePerDev || 14000)}/mo
+                      </strong>
                     </div>
                   </div>
 
@@ -381,41 +467,67 @@ export default function Projects({ projects, employees, onOpenAddProject, setAct
 
                 {/* 2.5: Aligned Action Footer */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-xs font-medium text-slate-500">
-                    {isFulfilled ? (
-                      <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>SOW fully staffed</span>
-                      </span>
-                    ) : (
-                      <span className="text-amber-800 font-bold">
-                        {unfilledSeats} unfilled seat{unfilledSeats > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </span>
+                  <button
+                    onClick={() => setSelectedProjectDetail(proj)}
+                    className="text-slate-600 hover:text-blue-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-blue-500" />
+                    <span>SOW Details</span>
+                  </button>
 
-                  {isFulfilled ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200">
-                      Staffed
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-slate-500 hidden sm:inline">
+                      {isFulfilled ? (
+                        <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Staffed</span>
+                        </span>
+                      ) : (
+                        <span className="text-amber-800 font-bold">
+                          {unfilledSeats} open
+                        </span>
+                      )}
                     </span>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setSelectedProjectForMatch(proj.id);
-                        setActiveTab("matching");
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-200"
-                    >
-                      <span>Match Talent</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+
+                    {isFulfilled ? (
+                      <button
+                        onClick={() => setSelectedProjectDetail(proj)}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold border border-slate-200 cursor-pointer"
+                      >
+                        Team Roster
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setSelectedProjectForMatch(proj.id);
+                          setActiveTab("matching");
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-200"
+                      >
+                        <span>Match Talent</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* 3.2: Complete Project Detail & Deliverables Workspace Modal */}
+      <ProjectDetailModal
+        project={selectedProjectDetail}
+        isOpen={Boolean(selectedProjectDetail)}
+        onClose={() => setSelectedProjectDetail(null)}
+        employees={employees}
+        onMatchBenchTalent={(projId) => {
+          setSelectedProjectForMatch(projId);
+          setActiveTab("matching");
+        }}
+        onSelectEmployee={onSelectEmployee}
+      />
     </div>
   );
 }

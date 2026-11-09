@@ -4,6 +4,7 @@ import {
   ShieldCheck, Sparkles, CheckCircle2, Filter, X, ArrowUpDown, ArrowUp, ArrowDown, RotateCcw 
 } from "lucide-react";
 import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
+import { getBenchRiskTier } from "../services/mockData";
 
 export default function Employees({ employees, onOpenAddEmployee, setActiveTab, onSelectEmployee }) {
   const [searchTerm, setSearchTerm] = useState("");

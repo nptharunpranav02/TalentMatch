@@ -1,10 +1,10 @@
-import { initialEmployees, initialProjects, initialAllocations } from "./mockData";
+import { initialEmployees, initialProjects, initialAllocations, upskillingCourses } from "./mockData";
 
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
-// Bump to v5 to auto-migrate browser to mathematically reconciled dataset
-const STORAGE_VERSION = "v5";
+// Bump to v6 to auto-migrate browser to complete enterprise dossier and upskilling schema
+const STORAGE_VERSION = "v6";
 
 const loadStorage = (key, fallback) => {
   const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;
@@ -165,6 +165,20 @@ export const calculateMatchScore = (
     explanationParts.push(`Skill gap: ${missingSkills.join(", ")} (upskilling required)`);
   }
 
+  // Requirement 3.4: Upskilling & Skill Gap Analysis Plan
+  const upskillingPlan = missingSkills.map((skillName) => {
+    const key = skillName.toLowerCase();
+    const course = upskillingCourses[key] || {
+      title: `${skillName} Enterprise Accelerator Certification`,
+      duration: "1–2 weeks",
+      provider: "Corporate Learning Institute"
+    };
+    return {
+      skill: skillName,
+      ...course
+    };
+  });
+
   return {
     score: totalScore,
     scoreBreakdown: {
@@ -176,6 +190,7 @@ export const calculateMatchScore = (
     skillComparison,
     matchingSkills,
     missingSkills,
+    upskillingPlan,
     experienceComparison,
     availabilityComparison,
     aspirationComparison
@@ -321,6 +336,7 @@ export const api = {
           skillComparison: match.skillComparison,
           matchingSkills: match.matchingSkills,
           missingSkills: match.missingSkills,
+          upskillingPlan: match.upskillingPlan,
           experienceComparison: match.experienceComparison,
           availabilityComparison: match.availabilityComparison,
           aspirationComparison: match.aspirationComparison,
@@ -332,6 +348,35 @@ export const api = {
       return ranked.sort((a, b) => b.aiMatchScore - a.aiMatchScore);
     }
     const res = await fetch(`${API_BASE_URL}/projects/${projectId}/recommendations`);
+    return res.json();
+  },
+
+  // 3.1: Reverse Match: Ranked Project Matches for a Single Employee Dossier
+  async getEmployeeProjectRecommendations(employeeId) {
+    if (USE_MOCK) {
+      const projects = loadStorage("projects", initialProjects);
+      const employees = loadStorage("employees", initialEmployees);
+      const employee = employees.find((e) => e.id === employeeId);
+      if (!employee) return [];
+
+      const openProjects = projects.filter((p) => p.status === "OPEN");
+      const rankedProjects = openProjects.map((proj) => {
+        const match = calculateMatchScore(employee, proj);
+        return {
+          project: proj,
+          aiMatchScore: match.score,
+          scoreBreakdown: match.scoreBreakdown,
+          aiExplanation: match.explanation,
+          skillComparison: match.skillComparison,
+          matchingSkills: match.matchingSkills,
+          missingSkills: match.missingSkills,
+          upskillingPlan: match.upskillingPlan
+        };
+      });
+
+      return rankedProjects.sort((a, b) => b.aiMatchScore - a.aiMatchScore);
+    }
+    const res = await fetch(`${API_BASE_URL}/employees/${employeeId}/recommendations`);
     return res.json();
   },
 
