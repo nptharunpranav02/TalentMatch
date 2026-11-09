@@ -3,8 +3,8 @@ import { CheckCircle2, XCircle, Clock, ShieldCheck, UserCheck, Calendar, ArrowRi
 import { api } from "../services/api";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 
-export default function Approvals({ allocations, onAllocationReviewed }) {
-  const [activeTab, setActiveTab] = useState("PENDING");
+export default function Approvals({ allocations, onAllocationReviewed, setActiveTab }) {
+  const [approvalTab, setApprovalTab] = useState("PENDING");
   const [notesMap, setNotesMap] = useState({});
   const [startDateMap, setStartDateMap] = useState({});
   const [processingId, setProcessingId] = useState(null);
@@ -14,7 +14,7 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
   const pendingAllocations = allocations.filter((a) => a.status === "PENDING_APPROVAL");
   const historyAllocations = allocations.filter((a) => a.status !== "PENDING_APPROVAL");
 
-  const displayed = activeTab === "PENDING" ? pendingAllocations : historyAllocations;
+  const displayed = approvalTab === "PENDING" ? pendingAllocations : historyAllocations;
 
   const handleReview = async (allocationId, decision) => {
     setProcessingId(allocationId);
@@ -59,14 +59,37 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Review AI recommended talent proposals, verify billing rates, and authorize project SOW allocations.
           </p>
+          <div className="flex items-center gap-2 pt-2 text-xs font-bold">
+            <span className="text-slate-400 font-medium">Workflow:</span>
+            <button
+              onClick={() => setActiveTab && setActiveTab("dashboard")}
+              className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+            >
+              ← Back to Dashboard
+            </button>
+            <span className="text-slate-300">•</span>
+            <button
+              onClick={() => setActiveTab && setActiveTab("matching")}
+              className="text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+            >
+              AI Matching Engine →
+            </button>
+            <span className="text-slate-300">•</span>
+            <button
+              onClick={() => setActiveTab && setActiveTab("analytics")}
+              className="text-amber-700 hover:text-amber-900 underline cursor-pointer"
+            >
+              Workforce Analytics →
+            </button>
+          </div>
         </div>
 
         {/* Tab Toggle */}
         <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs font-bold shadow-2xs">
           <button
-            onClick={() => setActiveTab("PENDING")}
+            onClick={() => setApprovalTab("PENDING")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === "PENDING"
+              approvalTab === "PENDING"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             }`}
@@ -74,16 +97,16 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
             <span>Pending Review</span>
             {pendingAllocations.length > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                activeTab === "PENDING" ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-900 border border-amber-300"
+                approvalTab === "PENDING" ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}>
                 {pendingAllocations.length}
               </span>
             )}
           </button>
           <button
-            onClick={() => setActiveTab("HISTORY")}
+            onClick={() => setApprovalTab("HISTORY")}
             className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-              activeTab === "HISTORY"
+              approvalTab === "HISTORY"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             }`}
@@ -98,10 +121,10 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
           <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-900">
-            {activeTab === "PENDING" ? "All caught up! Zero pending allocations" : "No review history recorded yet"}
+            {approvalTab === "PENDING" ? "All caught up! Zero pending allocations" : "No review history recorded yet"}
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-            {activeTab === "PENDING"
+            {approvalTab === "PENDING"
               ? "Proposals submitted from the Matching tab will appear here for managerial sign-off and audit tracking."
               : "Decisions made on allocations will be archived here for compliance auditing and SOC2 compliance."}
           </p>

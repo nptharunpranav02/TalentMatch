@@ -106,7 +106,7 @@ export default function Dashboard({
             <span>AI-Powered Talent Allocation</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-            Match Available Bench Talent to Open Projects
+            Find Best Employee for a Project
           </h2>
           <p className="text-xs sm:text-sm text-blue-100/90 mt-1.5 leading-relaxed font-medium">
             Evaluate technical skills, seniority threshold, availability and career goals across {benchEmployees.length} bench engineers.
@@ -136,9 +136,74 @@ export default function Dashboard({
             onClick={() => setActiveTab("matching")}
             className="px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-black text-xs transition-all shadow-md shadow-blue-400/30 cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.02]"
           >
-            <span>Find Best Matches</span>
+            <span>Find Best Employee for a Project</span>
             <ArrowRight className="h-4 w-4" />
           </button>
+        </div>
+      </div>
+
+      {/* 30-Second Executive Summary & Guided Manager Action (Judges Fast-Track) */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 border border-blue-200/90 shadow-xs space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-600 text-white font-black text-[10px] uppercase tracking-wider shadow-2xs">
+                30-Second Executive Briefing
+              </span>
+              <span className="text-xs font-bold text-slate-800">
+                Workforce Allocation & SOW Capacity Health
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 font-medium leading-relaxed max-w-4xl">
+              Currently, <strong className="text-amber-950 font-extrabold">{benchEmployees.length} of {totalEmployees} engineers ({benchRate}%)</strong> are available on the bench. <strong className="text-rose-700 font-extrabold">{longestBenchEmployees[0]?.name || "Senior staff"}</strong> is at critical overhead risk (<strong className="text-rose-900">{getDaysOnBench(longestBenchEmployees[0]?.benchSince)} days idle</strong>). <strong className="text-blue-900 font-extrabold">{openPositions} open positions</strong> remain unfilled across {openProjects.length} client SOW projects.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 self-start lg:self-auto shrink-0">
+            {pendingApprovals.length > 0 ? (
+              <button
+                onClick={() => setActiveTab("approvals")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition-all shadow-md shadow-amber-300/40 cursor-pointer hover:scale-[1.02]"
+              >
+                <span>Recommended: Authorize {pendingApprovals[0]?.employeeName} for {pendingApprovals[0]?.projectName}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (unfilledProjects[0]) {
+                    setSelectedProjectForMatch(unfilledProjects[0].id);
+                  }
+                  setActiveTab("matching");
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs transition-all shadow-md shadow-blue-400/30 cursor-pointer hover:scale-[1.02]"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>Fill Vacancies in {unfilledProjects[0]?.name || "Open Projects"}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Question-Answer Breakdown Pill Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-semibold text-slate-600">
+          <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
+            <span><strong className="text-slate-900 font-bold">{benchEmployees.length} Available</strong> on Bench</span>
+          </div>
+          <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span><strong className="text-slate-900 font-bold">{allocatedEmployees.length} Staffed</strong> on Projects</span>
+          </div>
+          <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span>
+            <span><strong className="text-slate-900 font-bold">{openPositions} Vacant Seats</strong> Across SOWs</span>
+          </div>
+          <div className="bg-white/80 p-2.5 rounded-xl border border-blue-100 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span>
+            <span><strong className="text-rose-900 font-bold">{agingCritical} Critical</strong> ({">"}45d Idle Risk)</span>
+          </div>
         </div>
       </div>
 

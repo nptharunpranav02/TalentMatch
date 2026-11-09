@@ -1,7 +1,6 @@
 import EditEmployeeModal from "./components/EditEmployeeModal";
 import EditProjectModal from "./components/EditProjectModal";
 import DemoTestingDrawer from "./components/DemoTestingDrawer";
-import WorkflowNavigationHub from "./components/WorkflowNavigationHub";
 import Analytics from "./pages/Analytics";
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
@@ -187,12 +186,7 @@ function TalentMatchMain() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
-        {/* Redesigned Workflow Navigation Hub (Exact User Specification) */}
-        <WorkflowNavigationHub
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          pendingCount={pendingApprovalsCount}
-        />
+        
 
         
         {activeTab === "dashboard" && (
@@ -239,6 +233,7 @@ function TalentMatchMain() {
             projects={projects}
             selectedProjectId={selectedProjectForMatch}
             setSelectedProjectId={setSelectedProjectForMatch}
+            setActiveTab={setActiveTab}
             onAllocationProposed={loadAllData}
             onOpenCandidateDrawer={(emp) => setDrawerEmployee(emp)}
             onOpenCompareModal={(proj, a, b) => setCompareModalData({ project: proj, candidateA: a, candidateB: b })}
@@ -248,6 +243,7 @@ function TalentMatchMain() {
         {activeTab === "approvals" && (
           <Approvals
             allocations={allocations}
+            setActiveTab={setActiveTab}
             onAllocationReviewed={loadAllData}
           />
         )}

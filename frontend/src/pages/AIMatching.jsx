@@ -9,6 +9,7 @@ export default function AIMatching({
   projects,
   selectedProjectId,
   setSelectedProjectId,
+  setActiveTab,
   onAllocationProposed,
   onOpenCandidateDrawer,
   onOpenCompareModal
@@ -60,6 +61,9 @@ export default function AIMatching({
       await onAllocationProposed();
     }
     await fetchRecommendations(currentProject.id);
+    if (!allocationPayload.directAuthorize && setActiveTab) {
+      setTimeout(() => setActiveTab("approvals"), 700);
+    }
     setTimeout(() => setToastMessage(null), 4000);
   };
 

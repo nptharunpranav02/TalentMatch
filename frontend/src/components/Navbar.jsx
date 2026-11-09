@@ -161,7 +161,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
             </div>
 
             {/* 2.1: Quick Search with Generous Minimum Width */}
-            <div className="hidden md:flex items-center flex-1 max-w-xs lg:max-w-sm justify-center mx-2">
+            <div className="hidden 2xl:flex items-center flex-1 max-w-xs justify-center mx-2">
               <button
                 onClick={onOpenCommandPalette}
                 className="w-full flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 text-xs transition-colors cursor-pointer shadow-2xs"
@@ -177,7 +177,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
             </div>
 
             {/* Navigation Links with Balanced, Consistent Active Styling */}
-            <nav className="hidden xl:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1 sm:gap-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
