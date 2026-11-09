@@ -1,7 +1,7 @@
 import React from "react";
-import { Users, Briefcase, GitPullRequest, CheckSquare, LayoutGrid } from "lucide-react";
+import { Users, Briefcase, GitPullRequest, CheckSquare, LayoutGrid, Search } from "lucide-react";
 
-export default function Navbar({ activeTab, setActiveTab, pendingCount }) {
+export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette }) {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
     { id: "employees", label: "Employees", icon: Users },
@@ -19,7 +19,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount }) {
             className="flex items-center gap-2.5 cursor-pointer" 
             onClick={() => setActiveTab("dashboard")}
           >
-            <div className="h-8 w-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm tracking-tight">
+            <div className="h-8 w-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-xs">
               TM
             </div>
             <div>
@@ -31,6 +31,20 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount }) {
               </span>
             </div>
           </div>
+
+          {/* Center: Command Palette Trigger (Hackathon Winner Feature!) */}
+          <button
+            onClick={onOpenCommandPalette}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-slate-100 text-slate-400 hover:text-slate-600 text-xs transition-colors cursor-pointer w-64 justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Search className="h-3.5 w-3.5 text-slate-400" />
+              <span>Search talent, projects...</span>
+            </span>
+            <kbd className="px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 rounded">
+              Ctrl K
+            </kbd>
+          </button>
 
           {/* Navigation Links */}
           <nav className="flex items-center gap-1">
@@ -48,7 +62,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount }) {
                   }`}
                 >
                   <Icon className={`h-4 w-4 ${isActive ? "text-slate-900" : "text-slate-400"}`} />
-                  <span>{item.label}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
                   {item.badge > 0 && (
                     <span className="ml-1 inline-flex items-center justify-center px-1.5 py-0.2 rounded text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                       {item.badge}
@@ -58,17 +72,6 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount }) {
               );
             })}
           </nav>
-
-          {/* User Profile */}
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-medium text-slate-800">Engineering Manager</p>
-              <p className="text-[11px] text-slate-400">admin@company.com</p>
-            </div>
-            <div className="h-8 w-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-semibold">
-              EM
-            </div>
-          </div>
         </div>
       </div>
     </header>

@@ -7,6 +7,9 @@ import AIMatching from "./pages/AIMatching";
 import Approvals from "./pages/Approvals";
 import AddEmployeeModal from "./components/AddEmployeeModal";
 import AddProjectModal from "./components/AddProjectModal";
+import CandidateDrawer from "./components/CandidateDrawer";
+import CandidateCompareModal from "./components/CandidateCompareModal";
+import CommandPalette from "./components/CommandPalette";
 import { api } from "./services/api";
 
 export default function App() {
@@ -24,9 +27,12 @@ export default function App() {
   const [allocations, setAllocations] = useState([]);
   const [selectedProjectForMatch, setSelectedProjectForMatch] = useState(null);
 
-  // Modals
+  // Modals & Drawers (Hackathon Winners)
   const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [drawerEmployee, setDrawerEmployee] = useState(null);
+  const [compareModalData, setCompareModalData] = useState(null); // { project, candidateA, candidateB }
 
   const loadAllData = async () => {
     try {
@@ -59,6 +65,18 @@ export default function App() {
     await loadAllData();
   };
 
+  const handleSelectCompare = (chosenCandidate) => {
+    // Propose chosen candidate
+    api.proposeAllocation({
+      employeeId: chosenCandidate.employee.id,
+      projectId: compareModalData.project.id,
+      aiMatchScore: chosenCandidate.aiMatchScore,
+      aiExplanation: chosenCandidate.aiExplanation
+    }).then(() => {
+      loadAllData();
+    });
+  };
+
   const pendingApprovalsCount = allocations.filter(
     (a) => a.status === "PENDING_APPROVAL"
   ).length;
@@ -70,10 +88,11 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         pendingCount={pendingApprovalsCount}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
         {activeTab === "dashboard" && (
           <Dashboard
             stats={stats}
@@ -84,6 +103,7 @@ export default function App() {
             setSelectedProjectForMatch={setSelectedProjectForMatch}
             onOpenAddEmployee={() => setIsAddEmployeeOpen(true)}
             onOpenAddProject={() => setIsAddProjectOpen(true)}
+            onSelectEmployee={(emp) => setDrawerEmployee(emp)}
           />
         )}
 
@@ -92,6 +112,7 @@ export default function App() {
             employees={employees}
             onOpenAddEmployee={() => setIsAddEmployeeOpen(true)}
             setActiveTab={setActiveTab}
+            onSelectEmployee={(emp) => setDrawerEmployee(emp)}
           />
         )}
 
@@ -110,6 +131,8 @@ export default function App() {
             selectedProjectId={selectedProjectForMatch}
             setSelectedProjectId={setSelectedProjectForMatch}
             onAllocationProposed={loadAllData}
+            onOpenCandidateDrawer={(emp) => setDrawerEmployee(emp)}
+            onOpenCompareModal={(proj, a, b) => setCompareModalData({ project: proj, candidateA: a, candidateB: b })}
           />
         )}
 
@@ -122,18 +145,49 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 mt-12 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-200 bg-white py-5 mt-10 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>
-            <strong className="text-slate-800">TalentMatch</strong> — Intelligent Employee & Project Allocation System (PS-02)
+            <strong className="text-slate-800">TalentMatch</strong> — Intelligent Bench & Project Allocation
           </p>
-          <p className="text-slate-400">
-            Frontend MVP Built with React, Tailwind CSS & Lucide Icons
-          </p>
+          <div className="flex items-center gap-3 text-slate-400">
+            <span>Press <kbd className="px-1 py-0.5 text-[10px] bg-slate-100 border border-slate-200 rounded font-semibold text-slate-600">Ctrl+K</kbd> for Command Menu</span>
+          </div>
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Slide-over Profile Drawer */}
+      <CandidateDrawer
+        employee={drawerEmployee}
+        isOpen={Boolean(drawerEmployee)}
+        onClose={() => setDrawerEmployee(null)}
+        onMatchProject={(emp) => {
+          setActiveTab("matching");
+        }}
+      />
+
+      {/* Head-to-Head Compare Modal */}
+      <CandidateCompareModal
+        isOpen={Boolean(compareModalData)}
+        onClose={() => setCompareModalData(null)}
+        project={compareModalData?.project}
+        candidateA={compareModalData?.candidateA}
+        candidateB={compareModalData?.candidateB}
+        onSelectCandidate={handleSelectCompare}
+      />
+
+      {/* Quick Command Palette (Ctrl+K) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={setIsCommandPaletteOpen}
+        employees={employees}
+        projects={projects}
+        setActiveTab={setActiveTab}
+        setSelectedProjectForMatch={setSelectedProjectForMatch}
+        onSelectEmployee={(emp) => setDrawerEmployee(emp)}
+      />
+
+      {/* Standard Modals */}
       <AddEmployeeModal
         isOpen={isAddEmployeeOpen}
         onClose={() => setIsAddEmployeeOpen(false)}
