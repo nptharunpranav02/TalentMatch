@@ -206,6 +206,17 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
 
             {/* Right Action Icons: Currency + Notifications + Profile + Mobile Hamburger */}
             <div className="flex items-center gap-2 shrink-0">
+              {/* Full-Stack Status Pill */}
+              <div 
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shadow-2xs"
+                title="Frontend connected to Express Backend (port 5000) & FastAPI AI Engine (port 8000)"
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Node:5000</span>
+                <span className="text-emerald-400">•</span>
+                <span>FastAPI:8000</span>
+              </div>
+
               {/* Global Currency Switcher */}
               <div className="relative hidden sm:block">
                 <button

@@ -83,6 +83,10 @@ export default function AIMatching({
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs">
                 Multi-Vector Algorithmic Engine
               </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>FastAPI AI Engine Live (Port 8000 via Node:5000)</span>
+              </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium max-w-2xl">
               Transparent, explainable talent-to-project allocation engine evaluating 4 dimensions: technical skill mastery, seniority threshold, bench availability, and career aspirations.
@@ -397,7 +401,7 @@ export default function AIMatching({
                             <span>{(employee.location || "Global Remote").split(",")[0]}</span>
                           </span>
                           <span>•</span>
-                          <span className="font-semibold text-slate-700">{employee.experienceYears}y tenure</span>
+                          <span className="font-semibold text-slate-700">{employee.experienceYears}y experience</span>
                         </p>
                       </div>
                     </div>
