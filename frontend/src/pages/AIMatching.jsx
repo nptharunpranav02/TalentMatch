@@ -22,11 +22,13 @@ export default function AIMatching({
   // Allocation Confirmation Workflow Modal
   const [allocatingCandidate, setAllocatingCandidate] = useState(null);
 
-  // Model Weight Tuner
+  // Candidate Segmentation View & 4-Dimension Model Weight Tuner
+  const [candidateView, setCandidateView] = useState("all"); // 'all' | 'eligible' | 'gaps'
   const [showWeightTuner, setShowWeightTuner] = useState(false);
   const [weights, setWeights] = useState({
-    skillWeight: 60,
+    skillWeight: 40,
     experienceWeight: 25,
+    availabilityWeight: 20,
     interestWeight: 15
   });
 

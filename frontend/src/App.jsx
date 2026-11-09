@@ -23,49 +23,31 @@ import { OrgProvider } from "./context/OrgContext";
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, autoLoaded: false };
+    this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
   componentDidCatch(error, errorInfo) {
-    console.warn("TalentMatch auto-recovering session:", error);
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch {}
+    console.error("TalentMatch Error caught by ErrorBoundary:", error, errorInfo);
   }
-  componentDidMount() {
-    if (this.state.hasError && !this.state.autoLoaded) {
-      this.handleReset();
-    }
-  }
-  handleReset = () => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch {}
-    window.location.reload();
-  };
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center font-sans">
-          <div className="max-w-md p-8 bg-white rounded-3xl border border-blue-200 shadow-2xl space-y-5 animate-in fade-in duration-200">
-            <div className="h-14 w-14 mx-auto rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center text-2xl font-black shadow-xs">
-              ⚡
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Full-Stack Schema Synchronized</h2>
-              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                The workspace was upgraded with the new Express (port 5000) and FastAPI AI Engine (port 8000) pipeline. Click below to launch your updated dashboard.
-              </p>
-            </div>
+          <div className="max-w-lg p-6 bg-white rounded-2xl border border-rose-200 shadow-xl space-y-3">
+            <h2 className="text-base font-extrabold text-rose-700">Application Error Encountered</h2>
+            <pre className="text-left text-xs p-3 bg-slate-100 rounded-xl overflow-auto text-slate-800 font-mono">
+              {this.state.error?.toString()}
+            </pre>
             <button
-              onClick={this.handleReset}
-              className="w-full py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold rounded-xl shadow-md shadow-blue-200 transition-all cursor-pointer"
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
             >
-              Launch Latest Workspace →
+              Reset Session & Reload
             </button>
           </div>
         </div>
@@ -139,6 +121,35 @@ function TalentMatchMain() {
     await api.addProject(newProj);
     await loadAllData();
   };
+
+  const handleSaveEmployee = async (updatedEmp) => {
+    await api.updateEmployee(updatedEmp);
+    await loadAllData();
+  };
+
+  const handleDeleteEmployee = async (emp) => {
+    try {
+      await api.deleteEmployee(emp.id);
+      await loadAllData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleSaveProject = async (updatedProj) => {
+    await api.updateProject(updatedProj);
+    await loadAllData();
+  };
+
+  const handleDeleteProject = async (proj) => {
+    try {
+      await api.deleteProject(proj.id);
+      await loadAllData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
 
   const handleSelectCompare = (chosenCandidate) => {
     api.proposeAllocation({
