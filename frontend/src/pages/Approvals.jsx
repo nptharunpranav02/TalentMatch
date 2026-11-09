@@ -140,18 +140,18 @@ export default function Approvals({ allocations, onAllocationReviewed }) {
                       Match: {alloc.aiMatchScore}%
                     </span>
                     {isPending && (
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                        Pending Sign-off
+                      <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+                        🟡 PENDING APPROVAL
                       </span>
                     )}
                     {isApproved && (
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
-                        Authorized & Active
+                      <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
+                        🟢 ALLOCATED (CONFIRMED)
                       </span>
                     )}
                     {isRejected && (
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs">
-                        Rejected
+                      <span className="px-3 py-1 rounded-xl text-xs font-extrabold bg-rose-100 text-rose-900 border border-rose-300 shadow-2xs">
+                        🔴 REJECTED
                       </span>
                     )}
                   </div>

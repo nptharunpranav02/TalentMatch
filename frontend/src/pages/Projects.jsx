@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Plus, Search, Calendar, Users, MapPin, DollarSign, Building2, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
-import { getSkillBadgeClass } from "../utils/skillColors";
+import { Plus, Search, Calendar, Users, MapPin, DollarSign, Building2, AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck, UserCheck } from "lucide-react";
+import { getSkillBadgeClass, getAvatarColor, getInitials } from "../utils/skillColors";
 import { useOrg } from "../context/OrgContext";
 
-export default function Projects({ projects, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
+export default function Projects({ projects, employees, onOpenAddProject, setActiveTab, setSelectedProjectForMatch }) {
   const { formatMoney } = useOrg();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -32,8 +32,8 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
               {projects.length} Active SOWs
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Active project requirements, staffing quotas, and billing allocation status.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+            Active project requirements, staffing quotas, assigned engineers, and billing allocation status.
           </p>
         </div>
 
@@ -106,9 +106,13 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {filteredProjects.map((proj) => {
-          const allocated = proj.allocatedCount || 0;
+          // Reconciled allocated talent from employees list
+          const assignedList = (employees || []).filter(
+            (e) => e.assignedProjectId === proj.id && e.availabilityStatus === "ALLOCATED"
+          );
+          const allocated = assignedList.length;
           const percent = Math.min(Math.round((allocated / proj.teamSize) * 100), 100);
-          const isFulfilled = proj.status === "FULFILLED" || allocated >= proj.teamSize;
+          const isFulfilled = allocated >= proj.teamSize;
           const unfilledSeats = Math.max(0, proj.teamSize - allocated);
 
           return (
@@ -184,6 +188,36 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                   </div>
                 </div>
 
+                {/* 1.1: Assigned Staff Roster on the Project Card */}
+                <div className="mt-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                  <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1.5">
+                    Assigned Project Staff ({allocated} / {proj.teamSize})
+                  </span>
+                  {assignedList.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {assignedList.map((emp) => {
+                        const avatar = getAvatarColor(emp.name);
+                        return (
+                          <div key={emp.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/80">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className={`h-6 w-6 rounded-md flex items-center justify-center font-bold text-[10px] ${avatar.bg} ${avatar.text} shrink-0`}>
+                                {getInitials(emp.name)}
+                              </div>
+                              <span className="font-bold text-slate-900 truncate">{emp.name}</span>
+                              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-200">{emp.band}</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                              Active SOW
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 italic">No engineers assigned yet. Matching talent from bench...</span>
+                  )}
+                </div>
+
                 {/* Project Telemetry Specs */}
                 <div className="mt-3.5 grid grid-cols-3 gap-2 text-xs bg-slate-50/80 p-2.5 rounded-xl border border-slate-100 text-center">
                   <div>
@@ -209,7 +243,7 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                         key={req.name}
                         className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${getSkillBadgeClass(req.name)}`}
                       >
-                        {req.name}
+                        {req.name} (L{req.minProficiency})
                       </span>
                     ))}
                   </div>
@@ -230,16 +264,23 @@ export default function Projects({ projects, onOpenAddProject, setActiveTab, set
                     </span>
                   )}
                 </span>
-                <button
-                  onClick={() => {
-                    setSelectedProjectForMatch(proj.id);
-                    setActiveTab("matching");
-                  }}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-200"
-                >
-                  <span>Match Bench Talent</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+
+                {isFulfilled ? (
+                  <span className="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200">
+                    Fully Staffed
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSelectedProjectForMatch(proj.id);
+                      setActiveTab("matching");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-200"
+                  >
+                    <span>Match Bench Talent</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           );

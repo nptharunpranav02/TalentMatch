@@ -12,7 +12,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
     { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
     { id: "employees", label: "Employees", icon: Users },
     { id: "projects", label: "Projects", icon: Briefcase },
-    { id: "matching", label: "Matching", icon: GitPullRequest },
+    { id: "matching", label: "AI Workspace", icon: Sparkles },
     { id: "approvals", label: "Approvals", icon: CheckSquare, badge: pendingCount }
   ];
 
@@ -41,6 +41,9 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
               <div>
                 <span className="font-bold text-base text-slate-900 tracking-tight group-hover:text-blue-700 transition-colors">
                   Talent<span className="text-blue-600">Match</span>
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200 shadow-2xs">
+                    AI
+                  </span>
                 </span>
                 <span className="ml-2 text-xs text-slate-400 font-normal hidden lg:inline">
                   Workforce Intelligence
