@@ -1,66 +1,35 @@
-// Bright, vibrant, harmonious color palettes for engineering disciplines & avatars
-export const getSkillBadgeClass = (skillName = "") => {
-  const s = skillName.toLowerCase();
+// Consistent semantic badge styling system:
+// - Technical skills: Neutral blue
+// - Certifications: Light violet
+// - Required project skills: Green
+// - Missing skills: Orange
+// - Critical warnings / blockers: Red
 
-  // Frontend & UI (Bright Electric Sky / Cyan)
-  if (
-    s.includes("react") ||
-    s.includes("tailwind") ||
-    s.includes("javascript") ||
-    s.includes("typescript") ||
-    s.includes("css") ||
-    s.includes("redux") ||
-    s.includes("next") ||
-    s.includes("vue")
-  ) {
-    return "bg-sky-50 text-sky-800 border-sky-300 hover:bg-sky-100 transition-colors";
-  }
-
-  // Backend & Databases (Bright Warm Amber / Honey)
-  if (
-    s.includes("node") ||
-    s.includes("java") ||
-    s.includes("spring") ||
-    s.includes("kafka") ||
-    s.includes("postgre") ||
-    s.includes("sql") ||
-    s.includes("mongo") ||
-    s.includes("redis")
-  ) {
-    return "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 transition-colors";
-  }
-
-  // Cloud & DevOps (Bright Radiant Mint / Emerald)
-  if (
-    s.includes("aws") ||
-    s.includes("docker") ||
-    s.includes("kuber") ||
-    s.includes("terraform") ||
-    s.includes("ci/cd") ||
-    s.includes("cloud") ||
-    s.includes("linux")
-  ) {
-    return "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100 transition-colors";
-  }
-
-  // Data & AI (Bright Royal Indigo / Iris)
-  if (
-    s.includes("python") ||
-    s.includes("pytorch") ||
-    s.includes("fastapi") ||
-    s.includes("langchain") ||
-    s.includes("pandas") ||
-    s.includes("tableau") ||
-    s.includes("ai") ||
-    s.includes("ml")
-  ) {
-    return "bg-indigo-50 text-indigo-900 border-indigo-300 hover:bg-indigo-100 transition-colors";
-  }
-
-  return "bg-slate-50 text-slate-800 border-slate-300 hover:bg-slate-100 transition-colors";
+export const badgeStyles = {
+  // Employee verified technical skills
+  technicalSkill: "bg-blue-50 text-blue-800 border-blue-200/90 hover:bg-blue-100/70 transition-colors",
+  
+  // Official industry certifications & credentials
+  certification: "bg-purple-50 text-purple-800 border-purple-200/90 hover:bg-purple-100/70 transition-colors",
+  
+  // Required SOW project competencies
+  requiredSkill: "bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100/70 transition-colors",
+  
+  // Unmatched / missing skill gaps
+  missingSkill: "bg-amber-50 text-amber-900 border-amber-300/90 hover:bg-amber-100/70 transition-colors",
+  
+  // Critical warnings or tenure gaps
+  criticalWarning: "bg-rose-50 text-rose-800 border-rose-300/90 hover:bg-rose-100/70 transition-colors"
 };
 
-// Deterministic vibrant avatar color palette
+export const getSkillBadgeClass = (skillName = "", type = "technicalSkill") => {
+  if (badgeStyles[type]) {
+    return badgeStyles[type];
+  }
+  return badgeStyles.technicalSkill;
+};
+
+// Deterministic avatar color palette
 export const getAvatarColor = (name = "") => {
   const palettes = [
     { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200" },

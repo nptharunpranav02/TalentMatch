@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Check, CheckCircle2, UserCheck, AlertCircle, SlidersHorizontal, ArrowLeftRight, Eye, Sparkles, ShieldCheck, MapPin, Award, Layers, Trophy, Clock, Compass, AlertTriangle, ArrowRight, BookOpen } from "lucide-react";
 import { api } from "../services/api";
 import { useOrg } from "../context/OrgContext";
-import { getSkillBadgeClass, getAvatarColor, getInitials } from "../utils/skillColors";
+import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
 import AllocationConfirmModal from "../components/AllocationConfirmModal";
 
 export default function AIMatching({
@@ -236,6 +236,29 @@ export default function AIMatching({
           </div>
         </div>
       )}
+
+      {/* 2.4: Semantic Badge Evaluation Legend */}
+      <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50/80 px-4 py-2 rounded-xl border border-slate-200/80 flex-wrap gap-2">
+        <span className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Evaluation Legend:</span>
+        <div className="flex items-center gap-3 flex-wrap text-[11px]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+            <span className="font-medium text-slate-700">Satisfies Required Level (Green)</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            <span className="font-medium text-slate-700">Skill Gap / Missing (Orange)</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+            <span className="font-medium text-slate-700">Verified Technical Skill (Blue)</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-purple-500"></span>
+            <span className="font-medium text-slate-700">Industry Credential (Violet)</span>
+          </span>
+        </div>
+      </div>
 
       {/* Ranked Candidate List */}
       {loading ? (

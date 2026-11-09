@@ -1,6 +1,6 @@
 import React from "react";
 import { Users, Briefcase, CheckSquare, Plus, ArrowRight, Clock, Sparkles, TrendingUp, ShieldCheck, MapPin, Award, DollarSign } from "lucide-react";
-import { getSkillBadgeClass } from "../utils/skillColors";
+import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
 import { useOrg } from "../context/OrgContext";
 
 export default function Dashboard({
@@ -269,13 +269,13 @@ export default function Dashboard({
 
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
                       {emp.skills.slice(0, 3).map((s) => (
-                        <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${getSkillBadgeClass(s.name)}`}>
+                        <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.technicalSkill}`}>
                           {s.name}
                         </span>
                       ))}
                       {emp.certifications && emp.certifications.length > 0 && (
-                        <span className="px-2 py-0.5 text-[10px] rounded-md font-bold bg-blue-100/70 text-blue-800 border border-blue-300 inline-flex items-center gap-1">
-                          <ShieldCheck className="h-3 w-3 text-blue-600" />
+                        <span className={`px-2 py-0.5 text-[10px] rounded-md font-bold border inline-flex items-center gap-1 ${badgeStyles.certification}`}>
+                          <ShieldCheck className="h-3 w-3 text-purple-600" />
                           <span>Certified</span>
                         </span>
                       )}
@@ -345,7 +345,7 @@ export default function Dashboard({
 
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {proj.requiredSkills.slice(0, 3).map((s) => (
-                          <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${getSkillBadgeClass(s.name)}`}>
+                          <span key={s.name} className={`px-2.5 py-0.5 text-[11px] rounded-md font-semibold border ${badgeStyles.requiredSkill}`}>
                             {s.name}
                           </span>
                         ))}
