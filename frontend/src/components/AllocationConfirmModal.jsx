@@ -14,6 +14,10 @@ export default function AllocationConfirmModal({
   const [effectiveStartDate, setEffectiveStartDate] = useState(
     new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
+  const maxCapacity = candidate?.employee?.availableCapacityPercentage ?? (candidate?.employee?.availabilityStatus === "BENCH" ? 100 : 0);
+  const [allocationPercentage, setAllocationPercentage] = useState(
+    maxCapacity >= 100 ? 100 : (maxCapacity >= 50 ? 50 : (maxCapacity >= 25 ? 25 : 100))
+  );
   const [managerNotes, setManagerNotes] = useState("");
   const [allocationMode, setAllocationMode] = useState("PENDING"); // "PENDING" | "DIRECT"
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +37,7 @@ export default function AllocationConfirmModal({
       await onConfirmAllocation({
         employeeId: emp.id,
         projectId: project.id,
+        allocationPercentage,
         aiMatchScore: candidate.aiMatchScore,
         scoreBreakdown: candidate.scoreBreakdown,
         aiExplanation: candidate.aiExplanation,
@@ -154,6 +159,45 @@ export default function AllocationConfirmModal({
               <div className="px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold text-slate-900">
                 {formatMoney(project.monthlyRevenuePerDev || 14000)} / month per engineer
               </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-700">
+                Allocation Capacity / FTE Time-Slice *
+              </label>
+              <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                Available: {maxCapacity}%
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {[
+                { pct: 100, label: "100% Full-Time", fte: "1.0 FTE" },
+                { pct: 50, label: "50% Shared Pod", fte: "0.5 FTE" },
+                { pct: 25, label: "25% Advisory", fte: "0.25 FTE" }
+              ].map((opt) => {
+                const isExceeded = opt.pct > maxCapacity;
+                const isSelected = allocationPercentage === opt.pct;
+                return (
+                  <button
+                    key={opt.pct}
+                    type="button"
+                    disabled={isExceeded}
+                    onClick={() => setAllocationPercentage(opt.pct)}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isExceeded
+                        ? "opacity-40 bg-slate-100 border-slate-200 cursor-not-allowed"
+                        : isSelected
+                        ? "bg-blue-50 border-blue-400 ring-2 ring-blue-300 shadow-2xs"
+                        : "bg-white border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="font-extrabold text-slate-900 text-xs">{opt.label}</div>
+                    <div className="text-[10px] font-bold text-blue-600 mt-0.5">{opt.fte}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
