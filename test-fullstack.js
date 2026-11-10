@@ -1,9 +1,9 @@
-// Automated Full-Stack Tri-Service Integration Tester with Tier-1 Verification
+// Automated Full-Stack Tri-Service Integration Tester with Multi-Tenant Organization Space Verification
 const http = require('http');
 const WebSocket = require('ws');
 
 console.log('\x1b[36m%s\x1b[0m', '\n======================================================');
-console.log('\x1b[36m%s\x1b[0m', '   TALENTMATCH AI - TIER-1 PRODUCTION TEST SUITE      ');
+console.log('\x1b[36m%s\x1b[0m', '   TALENTMATCH AI - MULTI-TENANT ENTERPRISE SUITE     ');
 console.log('\x1b[36m%s\x1b[0m', '======================================================\n');
 
 function checkEndpoint(name, url, method = 'GET', postData = null) {
@@ -77,7 +77,7 @@ function testWebSocket() {
 
 async function runTests() {
   // Test 1: AI Engine
-  process.stdout.write('[1/5] Testing AI Engine (FastAPI :8000)... ');
+  process.stdout.write('[1/6] Testing AI Engine (FastAPI :8000)... ');
   const aiResult = await checkEndpoint('AI Engine', 'http://127.0.0.1:8000/api/v1/health');
   if (aiResult.ok && aiResult.data?.status === 'healthy') {
     console.log('\x1b[32m✔ ONLINE\x1b[0m (' + aiResult.data.service + ')');
@@ -86,7 +86,7 @@ async function runTests() {
   }
 
   // Test 2: Backend API
-  process.stdout.write('[2/5] Testing Backend API (Express :5000)... ');
+  process.stdout.write('[2/6] Testing Backend API (Express :5000)... ');
   const beResult = await checkEndpoint('Backend API', 'http://localhost:5000/api/health');
   if (beResult.ok && beResult.data?.success) {
     console.log('\x1b[32m✔ ONLINE\x1b[0m (DB: ' + beResult.data.database + ', AI Bridge: ' + beResult.data.aiEngine + ')');
@@ -94,8 +94,18 @@ async function runTests() {
     console.log('\x1b[31m✖ FAILED\x1b[0m (' + (beResult.error || 'Invalid response') + ')');
   }
 
-  // Test 3: Live WebSocket Multi-User Synchronization
-  process.stdout.write('[3/5] Testing Live WebSocket Multi-User Sync (ws://:5000/ws)... ');
+  // Test 3: Dedicated Organization Multi-Tenant Workspaces
+  process.stdout.write('[3/6] Testing Dedicated Organization Auth & Tenant Gateway... ');
+  const orgResult = await checkEndpoint('Organizations API', 'http://localhost:5000/api/organizations');
+  if (orgResult.ok && orgResult.data?.success && orgResult.data?.count >= 3) {
+    const orgNames = orgResult.data.data.map(o => o.name).join(', ');
+    console.log('\x1b[32m✔ VERIFIED\x1b[0m (' + orgResult.data.count + ' Dedicated Spaces: ' + orgNames + ')');
+  } else {
+    console.log('\x1b[31m✖ FAILED\x1b[0m (' + (orgResult.error || 'Invalid response') + ')');
+  }
+
+  // Test 4: Live WebSocket Multi-User Synchronization
+  process.stdout.write('[4/6] Testing Live WebSocket Multi-User Sync (ws://:5000/ws)... ');
   const wsResult = await testWebSocket();
   if (wsResult.ok) {
     console.log('\x1b[32m✔ CONNECTED & HEARTBEAT VERIFIED\x1b[0m');
@@ -103,8 +113,8 @@ async function runTests() {
     console.log('\x1b[31m✖ FAILED\x1b[0m (' + (wsResult.error || 'Connection failed') + ')');
   }
 
-  // Test 4: End-to-End AI Match Proxy
-  process.stdout.write('[4/5] Testing Tri-Service AI Pipeline (5000 -> 8000)... ');
+  // Test 5: End-to-End AI Match Proxy
+  process.stdout.write('[5/6] Testing Tri-Service AI Pipeline (5000 -> 8000)... ');
   const samplePayload = JSON.stringify({
     project: {
       id: "proj-1",
@@ -131,8 +141,8 @@ async function runTests() {
     console.log('\x1b[31m✖ FAILED\x1b[0m (' + (matchResult.error || 'Invalid response') + ')');
   }
 
-  // Test 5: Semantic Embedding Vector Matching Check
-  process.stdout.write('[5/5] Testing Semantic Skill Embedding Knowledge Graph... ');
+  // Test 6: Semantic Embedding Vector Matching Check
+  process.stdout.write('[6/6] Testing Semantic Skill Embedding Knowledge Graph... ');
   try {
     const { findSemanticSkillMatch } = require('./frontend/src/services/semanticSkills.js');
     const sem = findSemanticSkillMatch('postgresql', [{ name: 'SQL', proficiency: 5.0 }]);
@@ -146,7 +156,7 @@ async function runTests() {
   }
 
   console.log('\n======================================================');
-  console.log('✔ TIER-1 PLATFORM READY: Open \x1b[4mhttp://localhost:5173/\x1b[0m in browser');
+  console.log('✔ MULTI-TENANT ENTERPRISE PLATFORM READY: Open \x1b[4mhttp://localhost:5173/\x1b[0m in browser');
   console.log('======================================================\n');
 }
 

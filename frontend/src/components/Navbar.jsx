@@ -4,9 +4,13 @@ import {
   Building2, Check, Bell, Settings, User, LogOut, Menu, X, Shield, Clock, ExternalLink, RefreshCw, CheckCircle2, TrendingUp 
 } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
+import { useAuth } from "../context/AuthContext";
+import SwitchOrgModal from "./SwitchOrgModal";
 
 export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, onRefreshData, onOpenDemoDrawer, isWsConnected }) {
   const { orgName, updateOrgName, currency, currencies, setCurrency } = useOrg();
+  const { currentOrg, currentUser, logout } = useAuth();
+  const [showSwitchOrgModal, setShowSwitchOrgModal] = useState(false);
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -149,12 +153,15 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                   </form>
                 ) : (
                   <button
-                    onClick={() => setShowOrgEdit(true)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs font-semibold cursor-pointer transition-colors max-w-[220px]"
-                    title={`Organization: ${orgName} (Click to edit)`}
+                    onClick={() => setShowSwitchOrgModal(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200 text-slate-800 text-xs font-bold cursor-pointer transition-colors max-w-[260px] shadow-2xs"
+                    title={`Dedicated Space: ${currentOrg?.name || orgName} (Click to switch space)`}
                   >
                     <Building2 className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                    <span className="truncate">{orgName}</span>
+                    <span className="truncate">{currentOrg?.name || orgName}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-blue-600 text-white shrink-0 ml-1">
+                      SPACE
+                    </span>
                   </button>
                 )}
               </div>
@@ -402,15 +409,26 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                     onClick={() => setShowUserMenu(false)}
                   >
                     <div className="p-4 bg-slate-50 border-b border-slate-100">
-                      <p className="font-extrabold text-slate-900 text-sm">Alex Carter</p>
-                      <p className="text-slate-500 text-xs font-medium">VP of Resource Operations</p>
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full mt-1.5 border border-emerald-300">
-                        <Shield className="h-3 w-3" />
-                        <span>Director Authorization Tier</span>
-                      </span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                          {currentOrg?.slug?.toUpperCase() || "TENANT"} SPACE
+                        </span>
+                        <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                      </div>
+                      <p className="font-extrabold text-slate-900 text-sm">{currentUser?.name || "Organization Lead"}</p>
+                      <p className="text-slate-500 text-xs font-medium">{currentUser?.email || "admin@workspace.io"}</p>
+                      <p className="text-[11px] font-bold text-slate-700 mt-1 truncate">{currentOrg?.name || orgName}</p>
                     </div>
 
                     <div className="p-1.5 space-y-0.5">
+                      <button
+                        onClick={() => { setShowSwitchOrgModal(true); setShowUserMenu(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-blue-700 hover:bg-blue-50 font-bold cursor-pointer transition-colors"
+                      >
+                        <Building2 className="h-4 w-4 text-blue-600" />
+                        <span>Switch Organization Space</span>
+                      </button>
+
                       <button
                         onClick={() => setShowSettingsModal(true)}
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100 font-semibold cursor-pointer transition-colors"
@@ -420,11 +438,11 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                       </button>
 
                       <button
-                        onClick={() => setShowOrgEdit(true)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-100 font-semibold cursor-pointer transition-colors"
+                        onClick={() => logout()}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-700 hover:bg-rose-50 font-bold cursor-pointer transition-colors pt-2 border-t border-slate-100 mt-1"
                       >
-                        <Building2 className="h-4 w-4 text-slate-500" />
-                        <span>Rename Organization</span>
+                        <LogOut className="h-4 w-4 text-rose-600" />
+                        <span>Sign Out (Exit Space)</span>
                       </button>
                     </div>
 

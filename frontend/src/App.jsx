@@ -1,3 +1,5 @@
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import AuthPortal from "./pages/AuthPortal";
 import EditEmployeeModal from "./components/EditEmployeeModal";
 import EditProjectModal from "./components/EditProjectModal";
 import DemoTestingDrawer from "./components/DemoTestingDrawer";
@@ -401,12 +403,35 @@ function TalentMatchMain() {
   );
 }
 
+function AppRoot() {
+  const { isAuthenticated, isLoading, currentOrg } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-white text-xs font-bold font-sans">
+        <div className="flex items-center gap-3 bg-slate-800/80 px-5 py-3 rounded-2xl border border-slate-700 shadow-xl">
+          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <span>Connecting to Dedicated Organization Workspace...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPortal />;
+  }
+
+  return <TalentMatchMain key={currentOrg?.id || "default"} />;
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <OrgProvider>
-        <TalentMatchMain />
-      </OrgProvider>
+      <AuthProvider>
+        <OrgProvider>
+          <AppRoot />
+        </OrgProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

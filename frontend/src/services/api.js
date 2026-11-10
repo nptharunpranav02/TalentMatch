@@ -5,15 +5,22 @@ import { liveSync } from "./websocket";
 const USE_MOCK = true;
 const API_BASE_URL = "http://localhost:5000/api";
 
-// Tier-1 Enterprise Schema: Semantic Embeddings + Fractional FTE + Live WS Sync
-const STORAGE_VERSION = "v9_tier1";
+// Tier-1 Enterprise Multi-Tenant Schema: Semantic Embeddings + Fractional FTE + Isolated Spaces
+const STORAGE_VERSION = "v10_multitenant";
+
+export const getActiveOrgId = () => {
+  return localStorage.getItem("talentmatch_active_org_id") || "org-apex";
+};
 
 const loadStorage = (key, fallback) => {
-  const storageKey = `talentmatch_${STORAGE_VERSION}_${key}`;
+  const orgId = getActiveOrgId();
+  const storageKey = `talentmatch_${STORAGE_VERSION}_${orgId}_${key}`;
   const data = localStorage.getItem(storageKey);
   if (!data) {
-    localStorage.setItem(storageKey, JSON.stringify(fallback));
-    return fallback;
+    // If Apex, fallback to initial; otherwise blank
+    const initialFallback = (orgId === "org-apex") ? fallback : [];
+    localStorage.setItem(storageKey, JSON.stringify(initialFallback));
+    return initialFallback;
   }
   try {
     return JSON.parse(data);
@@ -23,7 +30,8 @@ const loadStorage = (key, fallback) => {
 };
 
 const saveStorage = (key, data) => {
-  localStorage.setItem(`talentmatch_${STORAGE_VERSION}_${key}`, JSON.stringify(data));
+  const orgId = getActiveOrgId();
+  localStorage.setItem(`talentmatch_${STORAGE_VERSION}_${orgId}_${key}`, JSON.stringify(data));
 };
 
 // ------------------------------------------------------------
@@ -397,22 +405,44 @@ export const api = {
   },
 
   async getEmployees() {
-    if (USE_MOCK) {
-      await this.reconcileData();
-      return loadStorage("employees", initialEmployees);
-    }
-    const res = await fetch(`${API_BASE_URL}/employees`);
-    return res.json();
+    const orgId = getActiveOrgId();
+    try {
+      const res = await fetch(`${API_BASE_URL}/organizations/${orgId}/employees`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          saveStorage("employees", json.data);
+          await this.reconcileData();
+          return json.data;
+        }
+      }
+    } catch {}
+    await this.reconcileData();
+    return loadStorage("employees", initialEmployees);
   },
 
   async addEmployee(newEmployee) {
-    if (USE_MOCK) {
-      const employees = loadStorage("employees", initialEmployees);
+    const orgId = getActiveOrgId();
+    let created = null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/organizations/${orgId}/employees`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEmployee),
+        signal: AbortSignal.timeout(2500)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        created = json.data;
+      }
+    } catch {}
+
+    if (!created) {
       const initialStatus = newEmployee.availabilityStatus || "BENCH";
-      const created = {
+      created = {
         ...newEmployee,
         id: `emp-${Date.now()}`,
-        empCode: `TM-${Math.floor(10000 + Math.random() * 90000)}`,
+        empCode: newEmployee.empCode || `TM-${Math.floor(10000 + Math.random() * 90000)}`,
         availabilityStatus: initialStatus,
         availableCapacityPercentage: initialStatus === "BENCH" ? 100 : (initialStatus === "PARTIAL_BENCH" ? 50 : 0),
         benchSince: initialStatus === "ALLOCATED" ? null : new Date().toISOString().split("T")[0],
@@ -421,56 +451,65 @@ export const api = {
         allocatedEngagements: [],
         certifications: newEmployee.certifications || []
       };
-      employees.unshift(created);
-      saveStorage("employees", employees);
-      await this.reconcileData();
-      liveSync.broadcast("EMPLOYEE_MUTATED", { action: "add", employee: created });
-      return created;
     }
-    const res = await fetch(`${API_BASE_URL}/employees`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newEmployee)
-    });
-    const data = await res.json();
-    liveSync.broadcast("EMPLOYEE_MUTATED", { action: "add", employee: data });
-    return data;
+
+    const employees = loadStorage("employees", initialEmployees);
+    employees.unshift(created);
+    saveStorage("employees", employees);
+    await this.reconcileData();
+    liveSync.broadcast("EMPLOYEE_MUTATED", { orgId, action: "add", employee: created });
+    return created;
   },
 
   async getProjects() {
-    if (USE_MOCK) {
-      const { projects } = await this.reconcileData();
-      return projects;
-    }
-    const res = await fetch(`${API_BASE_URL}/projects`);
-    return res.json();
+    const orgId = getActiveOrgId();
+    try {
+      const res = await fetch(`${API_BASE_URL}/organizations/${orgId}/projects`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data)) {
+          saveStorage("projects", json.data);
+          return json.data;
+        }
+      }
+    } catch {}
+    const { projects } = await this.reconcileData();
+    return projects;
   },
 
   async addProject(newProject) {
-    if (USE_MOCK) {
-      const projects = loadStorage("projects", initialProjects);
-      const created = {
+    const orgId = getActiveOrgId();
+    let created = null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/organizations/${orgId}/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProject),
+        signal: AbortSignal.timeout(2500)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        created = json.data;
+      }
+    } catch {}
+
+    if (!created) {
+      created = {
         ...newProject,
         id: `proj-${Date.now()}`,
-        projectCode: `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
+        projectCode: newProject.projectCode || `PRJ-${Math.floor(1000 + Math.random() * 9000)}`,
         allocatedCount: 0,
         allocatedFTE: 0,
         assignedEmployeeIds: [],
         status: "OPEN"
       };
-      projects.unshift(created);
-      saveStorage("projects", projects);
-      liveSync.broadcast("PROJECT_MUTATED", { action: "add", project: created });
-      return created;
     }
-    const res = await fetch(`${API_BASE_URL}/projects`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newProject)
-    });
-    const data = await res.json();
-    liveSync.broadcast("PROJECT_MUTATED", { action: "add", project: data });
-    return data;
+
+    const projects = loadStorage("projects", initialProjects);
+    projects.unshift(created);
+    saveStorage("projects", projects);
+    liveSync.broadcast("PROJECT_MUTATED", { orgId, action: "add", project: created });
+    return created;
   },
 
   async updateEmployee(updatedEmployee) {

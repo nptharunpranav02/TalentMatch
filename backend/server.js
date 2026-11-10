@@ -14,6 +14,7 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const allocationRoutes = require("./routes/allocationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const tenantRoutes = require("./routes/tenantRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -158,6 +159,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/allocations", allocationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api", tenantRoutes);
 
 // Error Handling Middleware
 app.use(notFound);
