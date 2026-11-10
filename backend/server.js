@@ -12,10 +12,20 @@ const employeeRoutes = require("./routes/employeeRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const allocationRoutes = require("./routes/allocationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const cors = require("cors");
+
+
 
 const app = express();
 
 // Middleware
+app.use(cors({
+    origin: "http://localhost:5173"
+}));
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+
 app.use(express.json());
 
 // Test route
