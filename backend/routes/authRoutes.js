@@ -5,7 +5,8 @@ const router = express.Router();
 
 const {
     login,
-    createManager
+    createManager,
+    me
 } = require("../controllers/authController");
 
 const {
@@ -15,6 +16,8 @@ const {
 
 // Public login route
 router.post("/login", login);
+
+router.get("/me", protect, me);
 
 // Only Admin can create Managers
 router.post(

@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Mail, Award, Clock, ArrowRight, Compass, CheckCircle2, ShieldCheck, MapPin, Briefcase } from "lucide-react";
-import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
+import { getSkillBadgeClass, getAvatarColor, getInitials } from "../utils/skillColors";
 import { useOrg } from "../context/OrgContext";
 
 export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProject }) {
@@ -128,9 +128,9 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                   {employee.certifications.map((cert) => (
                     <div
                       key={cert}
-                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 shadow-2xs ${badgeStyles.certification}`}
+                      className="p-2.5 rounded-xl bg-blue-50 text-blue-900 border border-blue-200 text-xs font-bold flex items-center gap-2 shadow-2xs"
                     >
-                      <ShieldCheck className="h-4 w-4 text-purple-600 shrink-0" />
+                      <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
                       <span>{cert}</span>
                     </div>
                   ))}
@@ -149,7 +149,7 @@ export default function CandidateDrawer({ employee, isOpen, onClose, onMatchProj
                   return (
                     <div key={skill.name} className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${badgeStyles.technicalSkill}`}>
+                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${getSkillBadgeClass(skill.name)}`}>
                           {skill.name}
                         </span>
                         <span className="text-slate-600 text-xs font-bold">L{skill.proficiency} / L5 • {skill.years || 2}y exp</span>

@@ -2,14 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Check, CheckCircle2, UserCheck, AlertCircle, SlidersHorizontal, ArrowLeftRight, Eye, Sparkles, ShieldCheck, MapPin, Award, Layers, Trophy, Clock, Compass, AlertTriangle, ArrowRight, BookOpen } from "lucide-react";
 import { api } from "../services/api";
 import { useOrg } from "../context/OrgContext";
-import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
+import { getSkillBadgeClass, getAvatarColor, getInitials } from "../utils/skillColors";
 import AllocationConfirmModal from "../components/AllocationConfirmModal";
 
 export default function AIMatching({
   projects,
   selectedProjectId,
   setSelectedProjectId,
-  setActiveTab,
   onAllocationProposed,
   onOpenCandidateDrawer,
   onOpenCompareModal
@@ -18,18 +17,16 @@ export default function AIMatching({
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [candidateSort, setCandidateSort] = useState("score"); // "score" | "exp" | "missing"
 
   // Allocation Confirmation Workflow Modal
   const [allocatingCandidate, setAllocatingCandidate] = useState(null);
 
-  // Candidate Segmentation View & 4-Dimension Model Weight Tuner
-  const [candidateView, setCandidateView] = useState("all"); // 'all' | 'eligible' | 'gaps'
+  // Model Weight Tuner
   const [showWeightTuner, setShowWeightTuner] = useState(false);
+  const [weightsDirty, setWeightsDirty] = useState(false);
   const [weights, setWeights] = useState({
-    skillWeight: 40,
+    skillWeight: 60,
     experienceWeight: 25,
-    availabilityWeight: 20,
     interestWeight: 15
   });
 
@@ -39,7 +36,7 @@ export default function AIMatching({
     if (currentProject) {
       fetchRecommendations(currentProject.id);
     }
-  }, [currentProject?.id, weights]);
+  }, [currentProject?.id]);
 
   const fetchRecommendations = async (projId) => {
     setLoading(true);
@@ -61,9 +58,6 @@ export default function AIMatching({
       await onAllocationProposed();
     }
     await fetchRecommendations(currentProject.id);
-    if (!allocationPayload.directAuthorize && setActiveTab) {
-      setTimeout(() => setActiveTab("approvals"), 700);
-    }
     setTimeout(() => setToastMessage(null), 4000);
   };
 
@@ -88,10 +82,6 @@ export default function AIMatching({
               <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">AI Matching Workspace</h1>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-200 shadow-2xs">
                 Multi-Vector Algorithmic Engine
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>FastAPI AI Engine Live (Port 8000 via Node:5000)</span>
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1.5 font-medium max-w-2xl">
@@ -124,30 +114,19 @@ export default function AIMatching({
               </button>
             )}
 
-            {/* Target Project Dropdown & Generate Matches CTA */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <select
-                  value={currentProject?.id || ""}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="px-3.5 py-2 rounded-xl border border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-900 text-xs font-bold focus:outline-none cursor-pointer shadow-xs hover:border-blue-400 transition-all"
-                >
-                  {projects.map((proj) => (
-                    <option key={proj.id} value={proj.id}>
-                      {proj.name} ({proj.client})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                onClick={() => fetchRecommendations(currentProject?.id)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-blue-200"
-                title="Run deterministic 4-vector matching algorithm"
+            {/* Target Project Dropdown */}
+            <div className="relative">
+              <select
+                value={currentProject?.id || ""}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="px-3.5 py-2 rounded-xl border border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-900 text-xs font-bold focus:outline-none cursor-pointer shadow-xs hover:border-blue-400 transition-all"
               >
-                <Sparkles className="h-4 w-4" />
-                <span>Generate Matches</span>
-              </button>
+                {projects.map((proj) => (
+                  <option key={proj.id} value={proj.id}>
+                    {proj.name} ({proj.client})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -161,32 +140,32 @@ export default function AIMatching({
                 <span className="text-[11px] text-slate-500 font-medium">Fine-tune the mathematical weighting of the allocation algorithm</span>
               </div>
               <button
-                onClick={() => setWeights({ skillWeight: 40, experienceWeight: 25, availabilityWeight: 20, interestWeight: 15 })}
+                onClick={() => { setWeights({ skillWeight: 60, experienceWeight: 25, interestWeight: 15 }); setWeightsDirty(true); }}
                 className="text-xs text-blue-700 hover:text-blue-900 font-bold underline cursor-pointer"
               >
                 Reset Default Weights
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs">
                 <div className="flex justify-between text-slate-700 mb-1.5">
-                  <span className="font-bold">1. Tech Skills</span>
+                  <span className="font-bold">1. Technical Skill Fit</span>
                   <span className="font-extrabold text-blue-700">{weights.skillWeight}%</span>
                 </div>
                 <input
                   type="range"
-                  min="10"
-                  max="70"
+                  min="20"
+                  max="80"
                   value={weights.skillWeight}
-                  onChange={(e) => setWeights({ ...weights, skillWeight: Number(e.target.value) })}
+                  onChange={(e) => { setWeights({ ...weights, skillWeight: Number(e.target.value) }); setWeightsDirty(true); }}
                   className="w-full accent-blue-600 cursor-pointer"
                 />
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs">
                 <div className="flex justify-between text-slate-700 mb-1.5">
-                  <span className="font-bold">2. Experience</span>
+                  <span className="font-bold">2. Seniority & Tenure Gate</span>
                   <span className="font-extrabold text-blue-700">{weights.experienceWeight}%</span>
                 </div>
                 <input
@@ -194,40 +173,29 @@ export default function AIMatching({
                   min="10"
                   max="50"
                   value={weights.experienceWeight}
-                  onChange={(e) => setWeights({ ...weights, experienceWeight: Number(e.target.value) })}
+                  onChange={(e) => { setWeights({ ...weights, experienceWeight: Number(e.target.value) }); setWeightsDirty(true); }}
                   className="w-full accent-blue-600 cursor-pointer"
                 />
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs">
                 <div className="flex justify-between text-slate-700 mb-1.5">
-                  <span className="font-bold">3. Availability</span>
-                  <span className="font-extrabold text-amber-700">{weights.availabilityWeight || 20}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="10"
-                  max="40"
-                  value={weights.availabilityWeight || 20}
-                  onChange={(e) => setWeights({ ...weights, availabilityWeight: Number(e.target.value) })}
-                  className="w-full accent-amber-600 cursor-pointer"
-                />
-              </div>
-
-              <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs">
-                <div className="flex justify-between text-slate-700 mb-1.5">
-                  <span className="font-bold">4. Career Alignment</span>
-                  <span className="font-extrabold text-indigo-700">{weights.interestWeight}%</span>
+                  <span className="font-bold">3. Career Aspiration Vector</span>
+                  <span className="font-extrabold text-blue-700">{weights.interestWeight}%</span>
                 </div>
                 <input
                   type="range"
                   min="5"
                   max="35"
                   value={weights.interestWeight}
-                  onChange={(e) => setWeights({ ...weights, interestWeight: Number(e.target.value) })}
-                  className="w-full accent-indigo-600 cursor-pointer"
+                  onChange={(e) => { setWeights({ ...weights, interestWeight: Number(e.target.value) }); setWeightsDirty(true); }}
+                  className="w-full accent-blue-600 cursor-pointer"
                 />
               </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-slate-500">Weights are normalized automatically; aspiration combines availability and career-interest scores.</span>
+              <button type="button" disabled={!currentProject || !weightsDirty || loading} onClick={() => { if (currentProject) fetchRecommendations(currentProject.id); setWeightsDirty(false); }} className="px-3 py-2 rounded-lg bg-blue-600 text-white font-bold text-xs disabled:opacity-50">Apply weights</button>
             </div>
           </div>
         )}
@@ -251,7 +219,7 @@ export default function AIMatching({
 
           <div className="flex items-center gap-4 sm:gap-6 text-slate-300 flex-wrap">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase block font-bold">Min Experience</span>
+              <span className="text-[10px] text-slate-400 uppercase block font-bold">Min Tenure</span>
               <strong className="text-white font-extrabold">{currentProject.minExperienceYears} Years</strong>
             </div>
             <div>
@@ -267,57 +235,12 @@ export default function AIMatching({
             <div>
               <span className="text-[10px] text-slate-400 uppercase block font-bold">Billing Rate</span>
               <strong className="text-amber-300 font-extrabold">
-                {formatMoney(currentProject.monthlyRevenuePerDev || 14000)} / dev / mo
+                {formatMoney(currentProject.monthlyRevenuePerDev || 14000)} / mo
               </strong>
             </div>
           </div>
         </div>
       )}
-
-      {/* 4.9: Candidate Sorting Controls & Evaluation Legend */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-slate-50/80 px-4 py-2.5 rounded-2xl border border-slate-200/80">
-        {/* Eligibility Segmentation Tabs (Requirement Section 6) */}
-        <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs font-bold shadow-2xs">
-          <button
-            onClick={() => setCandidateView("all")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-              candidateView === "all" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            All Candidates ({recommendations.length})
-          </button>
-          <button
-            onClick={() => setCandidateView("eligible")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-              candidateView === "eligible" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Eligible for SOW ({recommendations.filter(c => c.isEligible && (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) > 0).length})
-          </button>
-          <button
-            onClick={() => setCandidateView("gaps")}
-            className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-              candidateView === "gaps" ? "bg-amber-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Candidates with Gaps / Committed ({recommendations.filter(c => !c.isEligible || (c.employee.availableCapacityPercentage ?? (c.employee.availabilityStatus === "BENCH" ? 100 : 0)) === 0).length})
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <span className="text-[11px] font-bold text-slate-500">Sort Candidates:</span>
-          <select
-            value={candidateSort}
-            onChange={(e) => setCandidateSort(e.target.value)}
-            aria-label="Sort candidate recommendations"
-            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-2xs cursor-pointer"
-          >
-            <option value="score">AI Match Score: Highest First</option>
-            <option value="exp">Experience: Senior First</option>
-            <option value="missing">Fewest Missing Skills</option>
-          </select>
-        </div>
-      </div>
 
       {/* Ranked Candidate List */}
       {loading ? (
@@ -333,18 +256,7 @@ export default function AIMatching({
         </div>
       ) : (
         <div className="space-y-4">
-          {[...recommendations]
-            .filter((item) => {
-              const cap = item.employee.availableCapacityPercentage ?? (item.employee.availabilityStatus === "BENCH" ? 100 : 0);
-              if (candidateView === "eligible") return item.isEligible && cap > 0;
-              if (candidateView === "gaps") return !item.isEligible || cap === 0;
-              return true;
-            })
-            .sort((a, b) => {
-              if (candidateSort === "exp") return (b.employee?.experienceYears || 0) - (a.employee?.experienceYears || 0);
-              if (candidateSort === "missing") return (a.missingSkills?.length || 0) - (b.missingSkills?.length || 0);
-              return b.aiMatchScore - a.aiMatchScore;
-            }).map((item, index) => {
+          {recommendations.map((item, index) => {
             const {
               employee,
               aiMatchScore,
@@ -353,7 +265,6 @@ export default function AIMatching({
               skillComparison,
               matchingSkills,
               missingSkills,
-              upskillingPlan = [],
               experienceComparison,
               availabilityComparison,
               aspirationComparison,
@@ -376,7 +287,7 @@ export default function AIMatching({
                 key={employee.id}
                 className={`p-5 rounded-2xl bg-white border transition-all shadow-sm hover:shadow-md flex flex-col lg:flex-row lg:items-start justify-between gap-5 ${
                   isTopRank 
-                    ? "border-blue-400 ring-2 ring-blue-100/80 bg-gradient-to-r from-blue-50/15 via-white to-white" 
+                    ? "border-blue-400 ring-2 ring-blue-100/80 bg-gradient-to-r from-blue-50 pts via-white to-white" 
                     : "border-slate-200/90 hover:border-blue-300"
                 }`}
               >
@@ -420,26 +331,14 @@ export default function AIMatching({
                             {employee.band}
                           </span>
 
-                          {/* Clear Status & Eligibility Badges (Section 6) */}
+                          {/* Requirement 1.4: Clear Status Labels */}
                           {isPendingApproval ? (
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
                               🟡 PENDING APPROVAL
                             </span>
-                          ) : (employee.availableCapacityPercentage ?? (employee.availabilityStatus === "BENCH" ? 100 : 0)) === 0 ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-300">
-                              🔒 ALLOCATED (0% Available)
-                            </span>
-                          ) : employee.availabilityStatus === "PARTIAL_BENCH" ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">
-                              ⚡ PARTIAL BENCH ({employee.availableCapacityPercentage}% Capacity Available)
-                            </span>
-                          ) : item.isEligible ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                              🟢 {employee.availableCapacityPercentage ?? 100}% CAPACITY READY
-                            </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
-                              ⚠️ SKILL / ELIGIBILITY GAP
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-900 border border-purple-300">
+                              🟣 RECOMMENDED (ON BENCH)
                             </span>
                           )}
                         </div>
@@ -452,7 +351,7 @@ export default function AIMatching({
                             <span>{(employee.location || "Global Remote").split(",")[0]}</span>
                           </span>
                           <span>•</span>
-                          <span className="font-semibold text-slate-700">{employee.experienceYears}y experience</span>
+                          <span className="font-semibold text-slate-700">{employee.experienceYears}y tenure</span>
                         </p>
                       </div>
                     </div>
@@ -465,23 +364,6 @@ export default function AIMatching({
                       <span>Inspect Dossier</span>
                     </button>
                   </div>
-
-                  {/* Hard Eligibility Checks & Identified Gaps (Section 6) */}
-                  {!item.isEligible && item.eligibilityReasons?.length > 0 && (
-                    <div className="p-3 rounded-xl bg-amber-50/90 border border-amber-300 text-xs text-amber-950 space-y-1.5 shadow-2xs">
-                      <div className="flex items-center gap-1.5 font-extrabold text-amber-900 uppercase text-[10px] tracking-wider">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                        <span>Identified Eligibility / Skill Gaps:</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {item.eligibilityReasons.map((reason, rIdx) => (
-                          <span key={rIdx} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-amber-900 border border-amber-300">
-                            • {reason}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* 1.2: Technical Skill Compatibility Matrix (Side-by-Side Required vs Actual) */}
                   <div className="p-3.5 rounded-xl bg-slate-50/90 border border-slate-200/80 space-y-2.5">
@@ -499,9 +381,7 @@ export default function AIMatching({
                         <div 
                           key={skill.name}
                           className={`p-2 rounded-lg border flex items-center justify-between ${
-                            skill.status === "SEMANTIC_FIT"
-                              ? "bg-purple-50/80 border-purple-300 text-purple-950"
-                              : skill.status === "EXCEEDS"
+                            skill.status === "EXCEEDS"
                               ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
                               : skill.status === "MEETS"
                               ? "bg-blue-50/80 border-blue-200 text-blue-900"
@@ -509,19 +389,12 @@ export default function AIMatching({
                           }`}
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
-                            {skill.status === "SEMANTIC_FIT" ? (
-                              <Sparkles className="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                            ) : skill.status === "MISSING" ? (
+                            {skill.status === "MISSING" ? (
                               <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0" />
                             ) : (
                               <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                             )}
                             <strong className="truncate">{skill.name}</strong>
-                            {skill.isSemantic && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-200 text-purple-900 border border-purple-300 ml-1">
-                                SEMANTIC ({skill.sourceSkill} {Math.round((skill.affinity || 0.9) * 100)}%)
-                              </span>
-                            )}
                           </div>
 
                           <div className="text-[11px] font-mono shrink-0 ml-2">
@@ -536,42 +409,7 @@ export default function AIMatching({
                     </div>
                   </div>
 
-                  {/* 3.4: Skill Gap Analysis & Recommended Upskilling Plan */}
-                  {missingSkills && missingSkills.length > 0 && upskillingPlan.length > 0 && (
-                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border border-amber-300 shadow-2xs space-y-2.5">
-                      <div className="flex items-center justify-between text-xs flex-wrap gap-1">
-                        <div className="flex items-center gap-1.5 font-extrabold text-amber-900 uppercase tracking-wider text-[11px]">
-                          <BookOpen className="h-4 w-4 text-amber-600 shrink-0" />
-                          <span>Skill Gap Analysis & Targeted Upskilling Plan</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300">
-                          {missingSkills.length} Competenc{missingSkills.length > 1 ? "ies" : "y"} To Upskill
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {upskillingPlan.map((plan) => (
-                          <div 
-                            key={plan.skill}
-                            className="p-2.5 rounded-lg bg-white border border-amber-200/80 shadow-2xs space-y-1"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-extrabold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded text-[10px] border border-rose-200">
-                                Gap: {plan.skill}
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
-                                {plan.duration}
-                              </span>
-                            </div>
-                            <p className="font-extrabold text-slate-900 text-xs">{plan.title}</p>
-                            <span className="text-[10px] text-slate-400 font-medium block">
-                              Provider: {plan.provider}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* 1.2: Dimensions Comparison (Experience, Availability, Career Interest) */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
                     {/* Experience Dimension */}
                     <div className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
@@ -581,7 +419,7 @@ export default function AIMatching({
                       <div className="flex items-baseline justify-between">
                         <strong className="text-slate-900 font-extrabold">{employee.experienceYears} Years</strong>
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                          {experienceComparison?.delta >= 0 ? `+${experienceComparison.delta}y surplus` : `${experienceComparison.delta}y gap`}
+                          {Number.isFinite(experienceComparison?.delta) ? (experienceComparison.delta >= 0 ? `+${experienceComparison.delta}y surplus` : `${experienceComparison.delta}y gap`) : `${Number(employee.experienceYears || 0) - Number(currentProject.minExperienceYears || 0) >= 0 ? "+" : ""}${Number(employee.experienceYears || 0) - Number(currentProject.minExperienceYears || 0)}y ${Number(employee.experienceYears || 0) >= Number(currentProject.minExperienceYears || 0) ? "surplus" : "gap"}`}
                         </span>
                       </div>
                       <span className="text-[10px] text-slate-500 block mt-0.5">Project target: {currentProject.minExperienceYears}y min</span>
@@ -645,7 +483,7 @@ export default function AIMatching({
                       {aiMatchScore >= 90 ? "★ Optimal Fit" : aiMatchScore >= 75 ? "Strong Candidate" : "Viable Match"}
                     </span>
                     <span className="text-[10px] text-slate-400 block mt-0.5">
-                      Tech: {scoreBreakdown?.technicalFit || 0}/40 • Exp: {scoreBreakdown?.experienceFit || 0}/25 • Avail: {scoreBreakdown?.availabilityFit || 0}/20 • Fit: {scoreBreakdown?.aspirationFit || 0}/15
+                      Tech: {scoreBreakdown?.technicalFit} pts • Exp: {scoreBreakdown?.experienceFit} pts
                     </span>
                   </div>
 

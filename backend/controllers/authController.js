@@ -121,7 +121,6 @@ const createManager = async (req, res) => {
     }
 };
 
-module.exports = {
-    login,
-    createManager
-};
+const me = async (req, res) => res.json({ success: true, user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role } });
+
+module.exports = { login, createManager, me };

@@ -6,27 +6,21 @@ const Allocation = require("../models/Allocation");
 const createProject = async (req, res) => {
     try {
         const {
-            projectId,
-            projectName,
-            description,
-            requiredSkills,
-            minExperience,
-            teamSize,
-            startDate,
-            endDate,
-            status
+            projectId, projectName, name, client, description, requiredSkills,
+            minExperience, minExperienceYears, teamSize, startDate, endDate,
+            status, priority, domain, preferredInterests, monthlyRevenuePerDev
         } = req.body;
+        const projectStart = startDate ? new Date(startDate) : new Date();
+        const projectEnd = endDate ? new Date(endDate) : new Date(projectStart.getTime() + 90 * 86400000);
 
         const project = await Project.create({
-            projectId,
-            projectName,
-            description,
-            requiredSkills,
-            minExperience,
-            teamSize,
-            startDate,
-            endDate,
-            status,
+            projectId: projectId || `PRJ-${Date.now()}`,
+            projectName: projectName || name,
+            client, description: description || "Project description not provided",
+            requiredSkills: (requiredSkills || []).map((skill) => typeof skill === "string" ? skill : ({ name: skill.name, proficiency: skill.minProficiency || skill.proficiency || 3 })),
+            minExperience: Number(minExperience ?? minExperienceYears ?? 0),
+            teamSize: Number(teamSize || 1), startDate: projectStart, endDate: projectEnd,
+            status: status || "planning", priority, domain, preferredInterests, monthlyRevenuePerDev,
             createdBy: req.user._id
         });
 
@@ -156,7 +150,7 @@ const updateProject = async (req, res) => {
             "teamSize",
             "startDate",
             "endDate",
-            "status"
+            "status", "client", "priority", "domain", "preferredInterests", "monthlyRevenuePerDev"
         ];
 
         const updates = {};

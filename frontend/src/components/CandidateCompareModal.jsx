@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Check, CheckCircle2, Award, Clock, ShieldCheck, MapPin } from "lucide-react";
-import { badgeStyles, getAvatarColor, getInitials } from "../utils/skillColors";
+import { getSkillBadgeClass, getAvatarColor, getInitials } from "../utils/skillColors";
 
 export default function CandidateCompareModal({
   isOpen,
@@ -71,15 +71,15 @@ export default function CandidateCompareModal({
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Scoring Decomposition</span>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Technical Coverage:</span>
-                    <strong className="text-blue-700 font-bold">{candidateA.scoreBreakdown.technicalFit}/60</strong>
+                    <strong className="text-blue-700 font-bold">{candidateA.scoreBreakdown.technicalFit} pts</strong>
                   </div>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Seniority Gate:</span>
-                    <strong className="text-emerald-700 font-bold">{candidateA.scoreBreakdown.experienceFit}/25</strong>
+                    <strong className="text-emerald-700 font-bold">{candidateA.scoreBreakdown.experienceFit} pts</strong>
                   </div>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Aspiration Alignment:</span>
-                    <strong className="text-indigo-700 font-bold">{candidateA.scoreBreakdown.aspirationFit}/15</strong>
+                    <strong className="text-indigo-700 font-bold">{candidateA.scoreBreakdown.aspirationFit} pts</strong>
                   </div>
                 </div>
               )}
@@ -103,8 +103,8 @@ export default function CandidateCompareModal({
               {empA.certifications && empA.certifications.length > 0 && (
                 <div className="space-y-1 text-xs">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Credentials</span>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold border ${badgeStyles.certification}`}>
-                    <ShieldCheck className="h-3.5 w-3.5 text-purple-600" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 text-xs font-bold">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                     <span>{empA.certifications[0]}</span>
                   </span>
                 </div>
@@ -150,15 +150,15 @@ export default function CandidateCompareModal({
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Scoring Decomposition</span>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Technical Coverage:</span>
-                    <strong className="text-blue-700 font-bold">{candidateB.scoreBreakdown.technicalFit}/60</strong>
+                    <strong className="text-blue-700 font-bold">{candidateB.scoreBreakdown.technicalFit} pts</strong>
                   </div>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Seniority Gate:</span>
-                    <strong className="text-emerald-700 font-bold">{candidateB.scoreBreakdown.experienceFit}/25</strong>
+                    <strong className="text-emerald-700 font-bold">{candidateB.scoreBreakdown.experienceFit} pts</strong>
                   </div>
                   <div className="flex justify-between text-slate-600 font-medium">
                     <span>Aspiration Alignment:</span>
-                    <strong className="text-indigo-700 font-bold">{candidateB.scoreBreakdown.aspirationFit}/15</strong>
+                    <strong className="text-indigo-700 font-bold">{candidateB.scoreBreakdown.aspirationFit} pts</strong>
                   </div>
                 </div>
               )}
@@ -182,8 +182,8 @@ export default function CandidateCompareModal({
               {empB.certifications && empB.certifications.length > 0 && (
                 <div className="space-y-1 text-xs">
                   <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">Credentials</span>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-bold border ${badgeStyles.certification}`}>
-                    <ShieldCheck className="h-3.5 w-3.5 text-purple-600" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-900 border border-blue-300 text-xs font-bold">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                     <span>{empB.certifications[0]}</span>
                   </span>
                 </div>

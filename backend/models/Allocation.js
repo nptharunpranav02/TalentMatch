@@ -15,6 +15,10 @@ const allocationSchema = new mongoose.Schema(
             required: true
         },
 
+        aiMatchScore: { type: Number, min: 0, max: 100, default: 0 },
+        aiExplanation: { type: String, default: "" },
+        scoreBreakdown: { type: mongoose.Schema.Types.Mixed, default: {} },
+        managerNotes: { type: String, default: "" },
         allocationPercentage: {
             type: Number,
             required: true,

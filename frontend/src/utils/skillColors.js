@@ -1,35 +1,66 @@
-// Consistent, high-fidelity semantic badge styling system:
-// - Technical skills: Refined neutral blue with subtle border
-// - Certifications: Royal violet with metallic sheen accent
-// - Required project skills: Emerald green with crisp contrast
-// - Missing skills: Warm amber with warning indicator
-// - Critical warnings / blockers: Crimson rose
+// Bright, vibrant, harmonious color palettes for engineering disciplines & avatars
+export const getSkillBadgeClass = (skillName = "") => {
+  const s = skillName.toLowerCase();
 
-export const badgeStyles = {
-  // Employee verified technical skills
-  technicalSkill: "bg-slate-100/90 hover:bg-blue-50 text-slate-800 hover:text-blue-800 border border-slate-200 hover:border-blue-300 font-semibold transition-all shadow-2xs",
-  
-  // Official industry certifications & credentials
-  certification: "bg-violet-50 text-violet-900 border border-violet-200/90 font-bold hover:bg-violet-100 transition-all shadow-2xs",
-  
-  // Required SOW project competencies
-  requiredSkill: "bg-emerald-50 text-emerald-900 border border-emerald-200 font-semibold hover:bg-emerald-100 transition-all shadow-2xs",
-  
-  // Unmatched / missing skill gaps
-  missingSkill: "bg-amber-50 text-amber-950 border border-amber-300/90 font-semibold hover:bg-amber-100 transition-all shadow-2xs",
-  
-  // Critical warnings or tenure gaps
-  criticalWarning: "bg-rose-50 text-rose-900 border border-rose-300/90 font-bold hover:bg-rose-100 transition-all shadow-2xs"
-};
-
-export const getSkillBadgeClass = (skillName = "", type = "technicalSkill") => {
-  if (badgeStyles[type]) {
-    return badgeStyles[type];
+  // Frontend & UI (Bright Electric Sky / Cyan)
+  if (
+    s.includes("react") ||
+    s.includes("tailwind") ||
+    s.includes("javascript") ||
+    s.includes("typescript") ||
+    s.includes("css") ||
+    s.includes("redux") ||
+    s.includes("next") ||
+    s.includes("vue")
+  ) {
+    return "bg-sky-50 text-sky-800 border-sky-300 hover:bg-sky-100 transition-colors";
   }
-  return badgeStyles.technicalSkill;
+
+  // Backend & Databases (Bright Warm Amber / Honey)
+  if (
+    s.includes("node") ||
+    s.includes("java") ||
+    s.includes("spring") ||
+    s.includes("kafka") ||
+    s.includes("postgre") ||
+    s.includes("sql") ||
+    s.includes("mongo") ||
+    s.includes("redis")
+  ) {
+    return "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100 transition-colors";
+  }
+
+  // Cloud & DevOps (Bright Radiant Mint / Emerald)
+  if (
+    s.includes("aws") ||
+    s.includes("docker") ||
+    s.includes("kuber") ||
+    s.includes("terraform") ||
+    s.includes("ci/cd") ||
+    s.includes("cloud") ||
+    s.includes("linux")
+  ) {
+    return "bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100 transition-colors";
+  }
+
+  // Data & AI (Bright Royal Indigo / Iris)
+  if (
+    s.includes("python") ||
+    s.includes("pytorch") ||
+    s.includes("fastapi") ||
+    s.includes("langchain") ||
+    s.includes("pandas") ||
+    s.includes("tableau") ||
+    s.includes("ai") ||
+    s.includes("ml")
+  ) {
+    return "bg-indigo-50 text-indigo-900 border-indigo-300 hover:bg-indigo-100 transition-colors";
+  }
+
+  return "bg-slate-50 text-slate-800 border-slate-300 hover:bg-slate-100 transition-colors";
 };
 
-// Deterministic avatar color palette with refined pastel backgrounds and deep contrast text
+// Deterministic vibrant avatar color palette
 export const getAvatarColor = (name = "") => {
   const palettes = [
     { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200" },

@@ -12,25 +12,18 @@ const escapeRegex = (value) => {
 const createEmployee = async (req, res) => {
     try {
         const {
-            employeeId,
-            name,
-            email,
-            department,
-            designation,
-            skills,
-            experience,
-            availability
+            employeeId, name, email, department, designation, role, skills,
+            experience, experienceYears, availability, availabilityStatus,
+            band, location, certifications, careerInterests
         } = req.body;
-
         const newEmployee = await Employee.create({
-            employeeId,
-            name,
-            email,
-            department,
-            designation,
-            skills,
-            experience,
-            availability
+            employeeId: employeeId || `TM-${Date.now()}`,
+            name, email, department: department || "General",
+            designation: designation || role || "Employee",
+            skills: (skills || []).map((skill) => typeof skill === "string" ? skill : ({ name: skill.name, proficiency: skill.proficiency || 3, years: skill.years || 0 })),
+            experience: Number(experience ?? experienceYears ?? 0),
+            availability: availability || (availabilityStatus === "ALLOCATED" ? "unavailable" : "available"),
+            band, location, certifications, careerInterests
         });
 
         res.status(201).json({
@@ -96,9 +89,14 @@ const getAllEmployees = async (req, res) => {
         }
 
         if (skill) {
+            const skillRegex = new RegExp(escapeRegex(skill), "i");
             filter.skills = {
-                $regex: escapeRegex(skill),
-                $options: "i"
+                $elemMatch: {
+                    $or: [
+                        { $eq: skill },
+                        { name: skillRegex }
+                    ]
+                }
             };
         }
 
@@ -188,7 +186,7 @@ const updateEmployee = async (req, res) => {
             "designation",
             "skills",
             "experience",
-            "availability"
+            "availability", "band", "location", "certifications", "careerInterests"
         ];
 
         const updateData = {};

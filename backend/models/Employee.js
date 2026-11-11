@@ -37,7 +37,7 @@ const employeeSchema = new mongoose.Schema(
         },
 
         skills: {
-            type: [String],
+            type: [mongoose.Schema.Types.Mixed],
             required: true,
             validate: {
                 validator: function (skills) {
@@ -58,6 +58,9 @@ const employeeSchema = new mongoose.Schema(
             enum: ["available", "unavailable"],
             default: "available"
         },
+        band: { type: String, default: "L4 / Senior SDE" },
+        location: { type: String, default: "" },
+        certifications: { type: [String], default: [] },
         allocationVersion: {
             type: Number,
             default: 0,

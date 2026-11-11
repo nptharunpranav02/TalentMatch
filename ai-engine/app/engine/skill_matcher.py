@@ -1,4 +1,3 @@
-from app.engine.semantic_matcher import find_semantic_match
 
 from dataclasses import dataclass, field
 
@@ -71,18 +70,6 @@ def analyze_skill_match(
         employee_level = employee.get(skill)
 
         if employee_level is None:
-            sem = find_semantic_match(skill, employee)
-            if sem.matched:
-                matched_skills.append(f"{skill} (via {sem.source_skill} {int(sem.affinity * 100)}% semantic fit)")
-                achieved_level = min(sem.effective_proficiency, float(required_level))
-                earned_weight += achieved_level * sem.affinity
-                if sem.effective_proficiency < required_level:
-                    proficiency_gaps[skill] = {
-                        "employee_level": int(round(sem.effective_proficiency)),
-                        "required_level": required_level,
-                        "gap": int(round(required_level - sem.effective_proficiency))
-                    }
-                continue
             missing_skills.append(skill)
             continue
 

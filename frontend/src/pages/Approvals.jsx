@@ -1,20 +1,18 @@
 import React, { useState } from "react";
 import { CheckCircle2, XCircle, Clock, ShieldCheck, UserCheck, Calendar, ArrowRight, FileCheck, Check, AlertTriangle } from "lucide-react";
 import { api } from "../services/api";
-import ConfirmActionModal from "../components/ConfirmActionModal";
 
-export default function Approvals({ allocations, onAllocationReviewed, setActiveTab }) {
-  const [approvalTab, setApprovalTab] = useState("PENDING");
+export default function Approvals({ allocations, onAllocationReviewed }) {
+  const [activeTab, setActiveTab] = useState("PENDING");
   const [notesMap, setNotesMap] = useState({});
   const [startDateMap, setStartDateMap] = useState({});
   const [processingId, setProcessingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
-  const [rejectConfirmAlloc, setRejectConfirmAlloc] = useState(null);
 
   const pendingAllocations = allocations.filter((a) => a.status === "PENDING_APPROVAL");
   const historyAllocations = allocations.filter((a) => a.status !== "PENDING_APPROVAL");
 
-  const displayed = approvalTab === "PENDING" ? pendingAllocations : historyAllocations;
+  const displayed = activeTab === "PENDING" ? pendingAllocations : historyAllocations;
 
   const handleReview = async (allocationId, decision) => {
     setProcessingId(allocationId);
@@ -59,37 +57,14 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Review AI recommended talent proposals, verify billing rates, and authorize project SOW allocations.
           </p>
-          <div className="flex items-center gap-2 pt-2 text-xs font-bold">
-            <span className="text-slate-400 font-medium">Workflow:</span>
-            <button
-              onClick={() => setActiveTab && setActiveTab("dashboard")}
-              className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
-            >
-              ← Back to Dashboard
-            </button>
-            <span className="text-slate-300">•</span>
-            <button
-              onClick={() => setActiveTab && setActiveTab("matching")}
-              className="text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
-            >
-              AI Matching Engine →
-            </button>
-            <span className="text-slate-300">•</span>
-            <button
-              onClick={() => setActiveTab && setActiveTab("analytics")}
-              className="text-amber-700 hover:text-amber-900 underline cursor-pointer"
-            >
-              Workforce Analytics →
-            </button>
-          </div>
         </div>
 
         {/* Tab Toggle */}
         <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 text-xs font-bold shadow-2xs">
           <button
-            onClick={() => setApprovalTab("PENDING")}
+            onClick={() => setActiveTab("PENDING")}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-              approvalTab === "PENDING"
+              activeTab === "PENDING"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             }`}
@@ -97,16 +72,16 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
             <span>Pending Review</span>
             {pendingAllocations.length > 0 && (
               <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                approvalTab === "PENDING" ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-900 border border-amber-300"
+                activeTab === "PENDING" ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-900 border border-amber-300"
               }`}>
                 {pendingAllocations.length}
               </span>
             )}
           </button>
           <button
-            onClick={() => setApprovalTab("HISTORY")}
+            onClick={() => setActiveTab("HISTORY")}
             className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-              approvalTab === "HISTORY"
+              activeTab === "HISTORY"
                 ? "bg-blue-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             }`}
@@ -121,10 +96,10 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
         <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
           <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-900">
-            {approvalTab === "PENDING" ? "All caught up! Zero pending allocations" : "No review history recorded yet"}
+            {activeTab === "PENDING" ? "All caught up! Zero pending allocations" : "No review history recorded yet"}
           </h3>
           <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-            {approvalTab === "PENDING"
+            {activeTab === "PENDING"
               ? "Proposals submitted from the Matching tab will appear here for managerial sign-off and audit tracking."
               : "Decisions made on allocations will be archived here for compliance auditing and SOC2 compliance."}
           </p>
@@ -156,14 +131,11 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Band: <strong className="text-indigo-700">{alloc.employeeBand || "L4"}</strong> • Client: <strong className="text-slate-800">{alloc.clientName || "Enterprise Client"}</strong> • Capacity: <strong className="text-blue-700">{alloc.allocationPercentage || 100}% FTE</strong> • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
+                      Band: <strong className="text-indigo-700">{alloc.employeeBand || "L4"}</strong> • Client: <strong className="text-slate-800">{alloc.clientName || "Enterprise Client"}</strong> • Proposed: {new Date(alloc.proposedAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2.5 self-start lg:self-auto">
-                    <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200 shadow-2xs">
-                      {alloc.allocationPercentage || 100}% SOW
-                    </span>
                     <span className="px-3 py-1 rounded-xl text-xs font-black bg-blue-100 text-blue-900 border border-blue-300 shadow-2xs">
                       Match: {alloc.aiMatchScore}%
                     </span>
@@ -189,11 +161,11 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
                 <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100 space-y-2 text-xs">
                   {alloc.scoreBreakdown && (
                     <div className="flex items-center gap-4 text-xs text-slate-600 pb-2 border-b border-slate-200/60 flex-wrap font-medium">
-                      <span>Technical Competency: <strong className="text-blue-700 font-bold">{alloc.scoreBreakdown.technicalFit}/60</strong></span>
+                      <span>Technical Competency: <strong className="text-blue-700 font-bold">{alloc.scoreBreakdown.technicalFit} pts</strong></span>
                       <span>•</span>
-                      <span>Seniority Gate: <strong className="text-emerald-700 font-bold">{alloc.scoreBreakdown.experienceFit}/25</strong></span>
+                      <span>Seniority Gate: <strong className="text-emerald-700 font-bold">{alloc.scoreBreakdown.experienceFit} pts</strong></span>
                       <span>•</span>
-                      <span>Aspiration Fit: <strong className="text-indigo-700 font-bold">{alloc.scoreBreakdown.aspirationFit}/15</strong></span>
+                      <span>Aspiration Fit: <strong className="text-indigo-700 font-bold">{alloc.scoreBreakdown.aspirationFit} pts</strong></span>
                     </div>
                   )}
                   <p className="text-slate-800 leading-relaxed font-medium">{alloc.aiExplanation}</p>
@@ -227,7 +199,7 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
                     <div className="flex items-center gap-2.5 justify-end">
                       <button
                         disabled={processingId === alloc.id}
-                        onClick={() => setRejectConfirmAlloc(alloc)}
+                        onClick={() => handleReview(alloc.id, "REJECTED")}
                         className="px-4 py-2 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50 text-xs font-bold transition-all cursor-pointer shadow-2xs"
                       >
                         Reject
@@ -257,21 +229,6 @@ export default function Approvals({ allocations, onAllocationReviewed, setActive
           })}
         </div>
       )}
-          {/* 4.11: Action Confirmation Modal for Rejections */}
-      <ConfirmActionModal
-        isOpen={Boolean(rejectConfirmAlloc)}
-        onClose={() => setRejectConfirmAlloc(null)}
-        onConfirm={() => {
-          if (rejectConfirmAlloc) {
-            handleReview(rejectConfirmAlloc.id, "REJECTED");
-            setRejectConfirmAlloc(null);
-          }
-        }}
-        title="Decline SOW Allocation Proposal"
-        message={`Are you sure you want to decline the proposed assignment of ${rejectConfirmAlloc?.employeeName} for ${rejectConfirmAlloc?.projectName}? This decision will be stamped in the audit trail.`}
-        confirmText="Confirm Rejection"
-        variant="danger"
-      />
     </div>
   );
 }

@@ -15,6 +15,8 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
     { name: "Node.js", minProficiency: 3 }
   ]);
   const [newSkillName, setNewSkillName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
@@ -28,21 +30,20 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
     setRequiredSkills(requiredSkills.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !client) return;
-
-    onProjectAdded({
-      name,
-      client,
-      description,
-      priority,
-      teamSize: Number(teamSize),
-      minExperienceYears: Number(minExperienceYears),
-      deadline,
-      requiredSkills
-    });
-    onClose();
+    if (!name.trim() || !client.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onProjectAdded({ name: name.trim(), client: client.trim(), description, priority,
+        teamSize: Number(teamSize), minExperienceYears: Number(minExperienceYears), deadline, requiredSkills });
+      onClose();
+    } catch (err) {
+      setError(err.message || "Could not save project. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -61,6 +62,7 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{error}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Engagement Name *</label>
@@ -187,6 +189,7 @@ export default function AddProjectModal({ isOpen, onClose, onProjectAdded }) {
             </button>
             <button
               type="submit"
+              disabled={saving}
               className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 cursor-pointer transition-all"
             >
               Create Engagement

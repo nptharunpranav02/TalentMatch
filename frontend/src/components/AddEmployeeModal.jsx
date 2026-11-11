@@ -20,6 +20,8 @@ export default function AddEmployeeModal({ isOpen, onClose, onEmployeeAdded }) {
 
   const [careerInterests, setCareerInterests] = useState(["Cloud Architecture", "System Design"]);
   const [newInterest, setNewInterest] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
@@ -43,23 +45,22 @@ export default function AddEmployeeModal({ isOpen, onClose, onEmployeeAdded }) {
     setCareerInterests(careerInterests.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email) return;
-
-    onEmployeeAdded({
-      name,
-      email,
-      role,
-      band,
-      department,
-      location,
-      experienceYears: Number(experienceYears),
-      availabilityStatus,
-      skills,
-      careerInterests
-    });
-    onClose();
+    if (!name.trim() || !email.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onEmployeeAdded({
+        name: name.trim(), email: email.trim(), role, band, department, location,
+        experienceYears: Number(experienceYears), availabilityStatus, skills, careerInterests
+      });
+      onClose();
+    } catch (err) {
+      setError(err.message || "Could not save employee. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -78,6 +79,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onEmployeeAdded }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{error}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
@@ -281,6 +283,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onEmployeeAdded }) {
             </button>
             <button
               type="submit"
+              disabled={saving}
               className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-200 cursor-pointer transition-all"
             >
               Save Profile

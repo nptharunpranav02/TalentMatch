@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Users, Briefcase, Sparkles, CheckSquare, X, ArrowRight, CornerDownLeft } from "lucide-react";
-import { getAvatarColor, getInitials } from "../utils/skillColors";
+import { getAvatarColor, getInitials, getSkillBadgeClass } from "../utils/skillColors";
 
 export default function CommandPalette({
   isOpen,

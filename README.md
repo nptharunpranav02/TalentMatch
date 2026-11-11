@@ -1,279 +1,80 @@
-# 🎯 TalentMatch: Intelligent Employee & Project Allocation System (PS-02)
+# TalentMatch — integrated setup
 
-An intelligent resource allocation platform that bridges the gap between IT bench talent and active project requirements using automated skills assessment, compatibility scoring, and managerial governance.
+## Architecture
+- `frontend`: React + Vite
+- `backend`: Express + MongoDB + JWT
+- `ai-engine`: FastAPI matching engine
 
----
+## Prerequisites
+- Node.js 20.19+ (Vite 8 requires a recent Node version)
+- Python 3.10+
+- MongoDB Atlas URI or local MongoDB
 
-## 👥 Team Responsibilities
+## 1. Configure environment
+Copy `backend/.env.example` to `backend/.env`, fill in MongoDB URI, a unique JWT secret (32+ characters), and admin credentials. Copy `frontend/.env.example` to `frontend/.env`.
 
-- **Member 1 (Frontend Development):** React dashboard, employee & project directories, AI match interface, manager approvals portal, dynamic state management.
-- **Member 2 (Backend Development):** Node.js + Express.js API, MongoDB database schemas (Employee, Project, Allocation), availability tracking state machine.
-- **Member 3 (AI Development):** Talent-to-project matching algorithm, vector embeddings, multi-factor compatibility scoring, natural language explanation generation.
+Do not commit `.env` files.
 
----
+## 2. Install dependencies
 
-## 🚀 1-Click Quickstart (Run All 3 Tiers Simultaneously)
-
-You can launch the **Frontend (Port 5173)**, **Express Backend (Port 5000)**, and **FastAPI AI Engine (Port 8000)** with a single command from the project root:
-
-```bash
-# Option A: 1-Command Unified Runner
-npm start
-# or: node run-all.js
-
-# Option B: Windows 1-Click
-Double-click start_all.bat
-
-# Option C: Run Automated Integration Verification
-npm run test:fullstack
-```
-
-### 🔗 Live URLs
-- 🖥️ **Web Application:** [http://localhost:5173/](http://localhost:5173/)
-- ⚙️ **Backend Health Telemetry:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
-- 🧠 **FastAPI Interactive Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
----
-
-## 🛠️ Individual Service Commands
-
-If you prefer running services in separate terminal windows:
-
-```bash
-# Terminal 1: AI Engine (FastAPI)
-cd ai-engine
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-
-# Terminal 2: Backend API (Node.js Express)
+```powershell
 cd backend
 npm install
-npm start
-
-# Terminal 3: Frontend (React + Vite)
-cd frontend
+cd ..\frontend
 npm install
-npm run dev
+cd ..\ai-engine
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
----
+## 3. Create the first admin (once)
 
-## 🖥️ Frontend Architecture & Delivered Features
-
-1. **📊 Executive Dashboard (`/dashboard`):**
-   - KPI metrics: Available on Bench, Allocated Staff, Open Projects, Pending Approvals.
-   - Longest bench talent quick list with direct action to match.
-   - Urgent project requirements tracker.
-
-2. **👥 Employee Management (`/employees`):**
-   - Search by name, technical skills (e.g., React, Python), role, or career interests.
-   - Filter by status (`On Bench` vs `Allocated`) and department.
-   - Modal form to register new employees with multi-skill tag proficiencies (L1 to L5) and career aspirations.
-
-3. **📁 Project Management (`/projects`):**
-   - Project catalog with client name, priority badge, and deadline.
-   - Team capacity progress meter (`2 / 4 filled`).
-   - Modal form to create new projects with required skills and minimum experience thresholds.
-
-4. **🤖 AI Candidate Matcher (`/matching`):**
-   - Select any target project to view ranked bench candidates.
-   - Compatibility score indicator (0–100%).
-   - Matched technical competencies breakdown vs missing skills.
-   - AI Rationale explaining why this candidate is suitable.
-   - "Propose for Allocation" action button.
-
-5. **✅ Manager Approval Center (`/approvals`):**
-   - Review queue for pending allocation requests.
-   - Sign-off controls: **Approve** (marks candidate as Allocated and increments project seat count) or **Reject** with feedback.
-   - Historical audit log of past reviewed allocations.
-
----
-
-## 🔌 API Integration Contract (For Member 2 & Member 3)
-
-The frontend contains `src/services/api.js`. It runs with realistic local mock state by default, and can connect to Member 2's backend by setting `USE_MOCK = false`.
-
-### Endpoints Expected by Frontend:
-- `GET  /api/dashboard/stats` → `{ totalEmployees, benchCount, allocatedCount, totalProjects, activeProjects, pendingApprovals }`
-- `GET  /api/employees` → List of employees
-- `POST /api/employees` → Register employee
-- `GET  /api/projects` → List of projects
-- `POST /api/projects` → Create project
-- `GET  /api/projects/:id/recommendations` → Ranked candidates with AI score & explanation
-- `GET  /api/allocations` → List of allocations
-- `POST /api/allocations` → Submit proposed allocation (`{ employeeId, projectId, aiMatchScore, aiExplanation }`)
-- `PATCH /api/allocations/:id/review` → `{ decision: 'APPROVED' | 'REJECTED', managerNotes }`
-
-# TalentMatch Backend
-
-The backend service for **TalentMatch – Intelligent Employee and Project Allocation System**.
-
-TalentMatch helps organizations allocate employees to suitable projects based on their technical skills, experience, availability, and career interests.
-
-## 🚀 Tech Stack
-
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MongoDB Atlas
-- **ODM:** Mongoose
-- **Authentication:** JSON Web Tokens (JWT)
-- **Password Hashing:** bcryptjs
-
-## 📁 Project Structure
-
-```text
-backend/
-├── config/
-│   └── db.js
-├── controllers/
-│   ├── allocationController.js
-│   ├── authController.js
-│   ├── dashboardController.js
-│   ├── employeeController.js
-│   └── projectController.js
-├── middleware/
-│   ├── authMiddleware.js
-│   └── errorMiddleware.js
-├── models/
-│   ├── Allocation.js
-│   ├── Employee.js
-│   ├── Project.js
-│   └── User.js
-├── routes/
-│   ├── allocationRoutes.js
-│   ├── authRoutes.js
-│   ├── dashboardRoutes.js
-│   ├── employeeRoutes.js
-│   └── projectRoutes.js
-├── scripts/
-│   └── createAdmin.js
-├── utils/
-│   └── allocationValidation.js
-├── tests/
-├── .env.example
-├── .gitignore
-├── API_DOCUMENTATION.md
-├── package.json
-└── server.js
-```
-
-## ⚙️ Installation & Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/nptharunpranav02/TalentMatch.git
-cd TalentMatch/backend
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure environment variables
-
-Create a `.env` file in the backend directory.
-
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secure_jwt_secret
-
-ADMIN_NAME=Admin
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your_secure_admin_password
-```
-
-Replace the placeholder values with your own credentials.
-
-**Never commit your `.env` file or expose database credentials and JWT secrets.**
-
-### 4. Create the admin account
-
-```bash
+```powershell
+cd backend
 npm run create-admin
 ```
 
-### 5. Start the development server
+Use `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `backend/.env` to sign in.
 
-```bash
+## 4. Start services in three terminals
+
+Terminal A:
+```powershell
+cd backend
 npm run dev
 ```
 
-For production:
-
-```bash
-npm start
+Terminal B:
+```powershell
+cd ai-engine
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
-The backend will run at:
-
-```text
-http://localhost:5000
+Terminal C:
+```powershell
+cd frontend
+npm run dev
 ```
 
-## 🔐 Authentication
+Open the Vite URL shown in the terminal (normally http://localhost:5173).
 
-TalentMatch uses JWT-based authentication and role-based authorization.
+## Health checks
+- Backend: http://localhost:5000/api/health
+- AI engine: http://localhost:8000/api/v1/health
+- AI docs: http://localhost:8000/docs
 
-Supported roles:
+## Important integration notes
+- The frontend now uses the Express API; localStorage mock mode has been removed.
+- JWT is stored in browser localStorage and sent as a Bearer token. Sign out clears it.
+- Express sends matching requests to FastAPI at `AI_ENGINE_URL`.
+- Allocation approvals are persisted in MongoDB.
+- The AI engine requires at least one project skill and at least one candidate employee.
 
-- **Admin:** Manages employees, projects, managers and allocation approvals.
-- **Manager:** Accesses employee and project information and manages allocation requests.
-
-Include the JWT token in protected API requests:
-
-```http
-Authorization: Bearer YOUR_JWT_TOKEN
-```
-
-## 📡 API Modules
-
-| Module | Endpoint | Description |
-|---|---|---|
-| Authentication | `/api/auth` | Login and manager creation |
-| Employees | `/api/employees` | Employee management |
-| Projects | `/api/projects` | Project management |
-| Allocations | `/api/allocations` | Allocation requests and approvals |
-| Dashboard | `/api/dashboard` | Statistics and utilization |
-
-For detailed endpoint documentation, request formats, response examples and access permissions, refer to **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)**.
-
-## 🧪 Testing
-
-Run the backend smoke tests:
-
-```bash
-npm test
-```
-
-The smoke tests cover:
-
-- Server health
-- Invalid route handling
-- Authentication and authorization
-- Employee APIs
-- Project APIs
-- Allocation APIs
-- Dashboard APIs
-
-Make sure the backend server is running and your database is configured before executing the tests.
-
-## 🧠 Core Functionalities
-
-- Employee management with technical skills and experience.
-- Project management with required skills and experience criteria.
-- JWT authentication and role-based access control.
-- Employee-to-project allocation requests.
-- Allocation percentage and date-overlap validation.
-- Allocation approval and rejection workflows.
-- Employee utilization and bench statistics.
-
-## 🔗 Repository
-
-[GitHub – TalentMatch](https://github.com/nptharunpranav02/TalentMatch)
-
----
-
-**TalentMatch** – Intelligent Employee and Project Allocation System.
+## Troubleshooting
+- `npm run dev` must be run from `frontend` or `backend`, not `ai-engine`.
+- If Vite fails with an engine/version error, install Node.js 20.19+ or 22.12+.
+- If backend reports MongoDB connection failure, check `MONGODB_URI` and Atlas network access.
+- If matching returns 502, start FastAPI and verify `AI_ENGINE_URL`.
+- If sign-in fails, run `npm run create-admin` after configuring backend `.env`.

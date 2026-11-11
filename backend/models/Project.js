@@ -23,7 +23,7 @@ const projectSchema = new mongoose.Schema(
         },
 
         requiredSkills: {
-            type: [String],
+            type: [mongoose.Schema.Types.Mixed],
             required: true,
             validate: {
                 validator: function (skills) {
@@ -33,6 +33,11 @@ const projectSchema = new mongoose.Schema(
             }
         },
 
+        client: { type: String, default: "" },
+        priority: { type: String, enum: ["Critical", "High", "Medium", "Low"], default: "Medium" },
+        domain: { type: String, default: "" },
+        preferredInterests: { type: [String], default: [] },
+        monthlyRevenuePerDev: { type: Number, default: 0 },
         minExperience: {
             type: Number,
             required: true,

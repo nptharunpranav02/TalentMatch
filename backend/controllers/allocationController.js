@@ -16,12 +16,15 @@ const createAllocation = async (req, res) => {
 
     try {
         const {
-            employee,
-            project,
-            allocationPercentage,
-            startDate,
-            endDate
+            employee: employeeInput, employeeId, project: projectInput, projectId,
+            allocationPercentage = 100, startDate: startInput, endDate: endInput,
+            aiMatchScore = 0, aiExplanation = "", scoreBreakdown = {}, managerNotes = "", directAuthorize = false
         } = req.body;
+        if (directAuthorize && req.user?.role !== "admin") {
+            return res.status(403).json({ success: false, message: "Only an admin can directly authorize an allocation" });
+        }
+        const employee = employeeInput || employeeId;
+        const project = projectInput || projectId;
 
         if (
             !mongoose.isValidObjectId(employee) ||
@@ -33,6 +36,10 @@ const createAllocation = async (req, res) => {
             });
         }
 
+        const projectForDates = await Project.findById(project);
+        if (!projectForDates) return res.status(404).json({ success: false, message: "Project not found" });
+        const startDate = startInput || projectForDates.startDate;
+        const endDate = endInput || projectForDates.endDate;
         const start = new Date(startDate);
         const end = new Date(endDate);
         const percentage = Number(allocationPercentage);
@@ -123,7 +130,12 @@ const createAllocation = async (req, res) => {
                 startDate: start,
                 endDate: end,
                 requestedBy: req.user._id,
-                status: "pending"
+                status: directAuthorize ? "approved" : "pending",
+                ...(directAuthorize ? { approvedBy: req.user._id, approvedAt: new Date(), allocatedAt: new Date() } : {}),
+                aiMatchScore: Number(aiMatchScore) || 0,
+                aiExplanation: String(aiExplanation || ""),
+                scoreBreakdown: scoreBreakdown || {},
+                managerNotes: String(managerNotes || "")
             }], { session });
 
             createdAllocation = allocation;
@@ -131,7 +143,7 @@ const createAllocation = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: "Allocation request created",
+            message: directAuthorize ? "Allocation directly authorized" : "Allocation request created",
             allocation: createdAllocation
         });
 
@@ -155,8 +167,8 @@ const getAllAllocations = async (req, res) => {
         if (req.query.project) filter.project = req.query.project;
 
         const allocations = await Allocation.find(filter)
-            .populate("employee", "employeeId name email skills experience")
-            .populate("project", "projectId projectName status")
+            .populate("employee", "employeeId name email skills experience designation band")
+            .populate("project", "projectId projectName client status")
             .populate("requestedBy", "name email role")
             .populate("approvedBy", "name email role")
             .sort({ createdAt: -1 });
@@ -243,8 +255,7 @@ const approveAllocation = async (req, res) => {
             employee: allocation.employee,
             status: { $in: ["pending", "approved"] },
             startDate: { $lte: allocation.endDate },
-            endDate: { $gte: allocation.startDate },
-            excludeAllocationId: allocation._id
+            endDate: { $gte: allocation.startDate }
         });
 
         const total = existing
@@ -268,6 +279,7 @@ const approveAllocation = async (req, res) => {
         allocation.status = "approved";
         allocation.approvedBy = req.user._id;
         allocation.approvedAt = new Date();
+        if (req.body?.managerNotes !== undefined) allocation.managerNotes = String(req.body.managerNotes).slice(0, 1000);
         allocation.allocatedAt = new Date();
 
         await allocation.save();
@@ -315,6 +327,7 @@ const rejectAllocation = async (req, res) => {
         allocation.status = "rejected";
         allocation.approvedBy = req.user._id;
         allocation.approvedAt = new Date();
+        if (req.body?.managerNotes !== undefined) allocation.managerNotes = String(req.body.managerNotes).slice(0, 1000);
 
         await allocation.save();
 
@@ -375,7 +388,15 @@ const cancelAllocation = async (req, res) => {
     }
 };
 
+const reviewAllocation = async (req, res) => {
+    const decision = String(req.body?.decision || "").toUpperCase();
+    if (decision === "APPROVED") return approveAllocation(req, res);
+    if (decision === "REJECTED") return rejectAllocation(req, res);
+    return res.status(400).json({ success: false, message: "Decision must be APPROVED or REJECTED" });
+};
+
 module.exports = {
+    reviewAllocation,
     createAllocation,
     getAllAllocations,
     getAllocationById,
