@@ -21,9 +21,10 @@ router.get("/:id", protect, authorizeRoles("admin", "manager"), getAllocationByI
 router.post("/", protect, authorizeRoles("admin", "manager"), createAllocation);
 
 // Approve or reject — admin only
-router.patch("/:id/approve", protect, authorizeRoles("admin", "manager"), approveAllocation);
-router.patch("/:id/reject", protect, authorizeRoles("admin", "manager"), rejectAllocation);
-router.patch("/:id/review", protect, authorizeRoles("admin", "manager"), reviewAllocation);
+// Only admins can approve or reject allocation requests
+router.patch("/:id/approve", protect, authorizeRoles("admin"), approveAllocation);
+router.patch("/:id/reject", protect, authorizeRoles("admin"), rejectAllocation);
+router.patch("/:id/review", protect, authorizeRoles("admin"), reviewAllocation);
 
 // Cancel allocation
 router.patch("/:id/cancel", protect, authorizeRoles("admin", "manager"), cancelAllocation);

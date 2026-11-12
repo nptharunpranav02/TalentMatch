@@ -15,7 +15,6 @@ const projectRoutes = require("./routes/projectRoutes");
 const allocationRoutes = require("./routes/allocationRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const aiRoutes = require("./routes/aiRoutes");
-
 const app = express();
 app.use(cors({
   origin: "https://talentmatch-t9xl.onrender.com",
