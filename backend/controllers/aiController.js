@@ -12,12 +12,12 @@ exports.getRecommendations = async (req, res) => {
     if (!projectId || !require("mongoose").isValidObjectId(projectId)) {
       return res.status(400).json({ success: false, message: "A valid projectId is required" });
     }
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ _id: projectId, companyId: req.companyId });
     if (!project) return res.status(404).json({ success: false, message: "Project not found" });
 
     const [employees, allocations] = await Promise.all([
-      Employee.find({ availability: "available" }).lean(),
-      Allocation.find({ status: { $in: ["pending", "approved"] } }).select("employee project status startDate endDate").lean()
+      Employee.find({ companyId: req.companyId, availability: "available" }).lean(),
+      Allocation.find({ companyId: req.companyId, status: { $in: ["pending", "approved"] } }).select("employee project status startDate endDate").lean()
     ]);
     const projectStart = new Date(project.startDate);
     const projectEnd = new Date(project.endDate);

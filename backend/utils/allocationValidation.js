@@ -3,6 +3,7 @@ const Allocation = require("../models/Allocation");
 const checkAllocationCapacity = async ({
     employeeId,
     projectId,
+    companyId,
     startDate,
     endDate,
     percentage,
@@ -10,6 +11,7 @@ const checkAllocationCapacity = async ({
     excludeAllocationId
 }) => {
     const filter = {
+        companyId,
         status: { $in: ["pending", "approved"] },
         startDate: { $lte: new Date(endDate) },
         endDate: { $gte: new Date(startDate) }

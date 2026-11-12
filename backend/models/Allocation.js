@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const allocationSchema = new mongoose.Schema(
     {
+        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
         employee: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Employee",
@@ -90,7 +91,7 @@ allocationSchema.pre("validate", function () {
 });
 
 // Indexes for faster allocation queries
-allocationSchema.index({ employee: 1, status: 1 });
-allocationSchema.index({ project: 1, status: 1 });
+allocationSchema.index({ companyId: 1, employee: 1, status: 1 });
+allocationSchema.index({ companyId: 1, project: 1, status: 1 });
 
 module.exports = mongoose.model("Allocation", allocationSchema);

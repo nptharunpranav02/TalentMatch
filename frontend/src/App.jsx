@@ -56,8 +56,50 @@ function LoginScreen({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const submit = async (event) => { event.preventDefault(); setBusy(true); setError(""); try { await api.login(email, password); onLogin(); } catch (err) { setError(err.message); } finally { setBusy(false); } };
-  return <div className="min-h-screen flex items-center justify-center bg-slate-950 p-5"><form onSubmit={submit} className="w-full max-w-sm bg-white rounded-2xl p-8 shadow-2xl space-y-4"><div className="text-2xl font-black text-slate-900">TalentMatch</div><p className="text-sm text-slate-500">Sign in to your organization workspace.</p><label className="block text-xs font-bold text-slate-700">Email<input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" /></label><label className="block text-xs font-bold text-slate-700">Password<input required type="password" value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" /></label>{error && <p className="text-sm text-rose-600">{error}</p>}<button disabled={busy} className="w-full bg-blue-600 text-white rounded-lg py-2.5 font-bold disabled:opacity-50">{busy ? "Signing in…" : "Sign in"}</button><p className="text-[11px] text-slate-400">Create the initial admin using the backend create-admin script.</p></form></div>;
+  const demoAccounts = [
+    { company: "Northstar Digital", email: "admin@northstar.test", password: "Northstar@123" },
+    { company: "BluePeak Technologies", email: "admin@bluepeak.test", password: "BluePeak@123" },
+    { company: "Greenfield Analytics", email: "admin@greenfield.test", password: "Greenfield@123" }
+  ];
+  const useDemoAccount = (account) => { setEmail(account.email); setPassword(account.password); setError(""); };
+  const submit = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try { await api.login(email, password); onLogin(); }
+    catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-5">
+      <div className="w-full max-w-md space-y-4">
+        <form onSubmit={submit} className="bg-white rounded-2xl p-8 shadow-2xl space-y-4">
+          <div className="text-2xl font-black text-slate-900">TalentMatch</div>
+          <p className="text-sm text-slate-500">Sign in with your company admin credentials. Your workspace is assigned automatically.</p>
+          <label className="block text-xs font-bold text-slate-700">Email
+            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" />
+          </label>
+          <label className="block text-xs font-bold text-slate-700">Password
+            <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" />
+          </label>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+          <button disabled={busy} className="w-full bg-blue-600 text-white rounded-lg py-2.5 font-bold disabled:opacity-50">{busy ? "Signing in…" : "Sign in"}</button>
+        </form>
+        <div className="bg-slate-900 border border-slate-700 rounded-2xl p-5 text-white space-y-3">
+          <div>
+            <p className="text-sm font-bold">Demo company accounts</p>
+            <p className="text-xs text-slate-400">Select an account to fill the login form. These are local prototype credentials, not real mailboxes.</p>
+          </div>
+          {demoAccounts.map(account => (
+            <button key={account.email} type="button" onClick={() => useDemoAccount(account)} className="w-full flex items-center justify-between gap-3 rounded-lg border border-slate-700 hover:border-blue-400 hover:bg-slate-800 px-3 py-2.5 text-left">
+              <span><span className="block text-sm font-semibold">{account.company}</span><span className="block text-xs text-slate-400">{account.email}</span></span>
+              <span className="text-xs font-semibold text-blue-300">Use login</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function TalentMatchMain() {

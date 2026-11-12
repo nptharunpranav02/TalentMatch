@@ -17,6 +17,7 @@ const createEmployee = async (req, res) => {
             band, location, certifications, careerInterests
         } = req.body;
         const newEmployee = await Employee.create({
+            companyId: req.companyId,
             employeeId: employeeId || `TM-${Date.now()}`,
             name, email, department: department || "General",
             designation: designation || role || "Employee",
@@ -69,7 +70,7 @@ const getAllEmployees = async (req, res) => {
         const pageNumber = Math.max(1, Number(page) || 1);
         const limitNumber = Math.min(100, Math.max(1, Number(limit) || 10));
 
-        const filter = {};
+        const filter = { companyId: req.companyId };
 
         if (search) {
             const searchRegex = new RegExp(escapeRegex(search), "i");
@@ -143,7 +144,7 @@ const getEmployeeById = async (req, res) => {
             });
         }
 
-        const employee = await Employee.findById(id);
+        const employee = await Employee.findOne({ _id: id, companyId: req.companyId });
 
         if (!employee) {
             return res.status(404).json({
@@ -208,8 +209,8 @@ const updateEmployee = async (req, res) => {
             updateData.email = updateData.email.trim().toLowerCase();
         }
 
-        const employee = await Employee.findByIdAndUpdate(
-            id,
+        const employee = await Employee.findOneAndUpdate(
+            { _id: id, companyId: req.companyId },
             { $set: updateData },
             {
                 new: true,
@@ -264,7 +265,7 @@ const deleteEmployee = async (req, res) => {
             });
         }
 
-        const employee = await Employee.findById(id);
+        const employee = await Employee.findOne({ _id: id, companyId: req.companyId });
 
         if (!employee) {
             return res.status(404).json({
@@ -275,6 +276,7 @@ const deleteEmployee = async (req, res) => {
 
         // Preserve allocation history and prevent orphan references
         const existingAllocation = await Allocation.exists({
+            companyId: req.companyId,
             employee: id
         });
 
@@ -285,7 +287,7 @@ const deleteEmployee = async (req, res) => {
             });
         }
 
-        await Employee.findByIdAndDelete(id);
+        await Employee.deleteOne({ _id: id, companyId: req.companyId });
 
         res.status(200).json({
             success: true,

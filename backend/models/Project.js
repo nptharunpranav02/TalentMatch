@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 
 const projectSchema = new mongoose.Schema(
     {
+        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
         projectId: {
             type: String,
             required: [true, "Project ID is required"],
-            unique: true,
             trim: true
         },
 
@@ -95,5 +95,7 @@ projectSchema.pre("validate", function () {
         );
     }
 });
+
+projectSchema.index({ companyId: 1, projectId: 1 }, { unique: true });
 
 module.exports = mongoose.model("Project", projectSchema);

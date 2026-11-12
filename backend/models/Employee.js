@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 
 const employeeSchema = new mongoose.Schema(
     {
+        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
         employeeId: {
             type: String,
             required: [true, "Employee ID is required"],
-            unique: true,
             trim: true
         },
 
@@ -19,7 +19,6 @@ const employeeSchema = new mongoose.Schema(
         email: {
             type: String,
             required: true,
-            unique: true,
             lowercase: true,
             trim: true
         },
@@ -76,5 +75,8 @@ const employeeSchema = new mongoose.Schema(
     },
 
 );
+
+employeeSchema.index({ companyId:  1, employeeId: 1 }, { unique: true });
+employeeSchema.index({ companyId: 1, email: 1 }, { unique: true });
 
 module.exports = mongoose.model("Employee", employeeSchema);

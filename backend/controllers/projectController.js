@@ -14,6 +14,7 @@ const createProject = async (req, res) => {
         const projectEnd = endDate ? new Date(endDate) : new Date(projectStart.getTime() + 90 * 86400000);
 
         const project = await Project.create({
+            companyId: req.companyId,
             projectId: projectId || `PRJ-${Date.now()}`,
             projectName: projectName || name,
             client, description: description || "Project description not provided",
@@ -57,7 +58,7 @@ const getAllProjects = async (req, res) => {
     try {
         const { status, search, page = 1, limit = 10 } = req.query;
 
-        const filter = {};
+        const filter = { companyId: req.companyId };
 
         if (status) filter.status = status;
 
@@ -109,7 +110,7 @@ const getProjectById = async (req, res) => {
             });
         }
 
-        const project = await Project.findById(req.params.id)
+        const project = await Project.findOne({ _id: req.params.id, companyId: req.companyId })
             .populate("createdBy", "name email role");
 
         if (!project) {
@@ -161,7 +162,7 @@ const updateProject = async (req, res) => {
             }
         }
 
-        const project = await Project.findById(req.params.id);
+        const project = await Project.findOne({ _id: req.params.id, companyId: req.companyId });
 
         if (!project) {
             return res.status(404).json({
@@ -204,7 +205,7 @@ const deleteProject = async (req, res) => {
             });
         }
 
-        const project = await Project.findById(req.params.id);
+        const project = await Project.findOne({ _id: req.params.id, companyId: req.companyId });
 
         if (!project) {
             return res.status(404).json({
@@ -214,6 +215,7 @@ const deleteProject = async (req, res) => {
         }
 
         const hasAllocations = await Allocation.exists({
+            companyId: req.companyId,
             project: project._id
         });
 

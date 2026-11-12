@@ -8,7 +8,8 @@ All endpoints require a Bearer JWT token except login.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/login` | Login |
+| POST | `/api/auth/login` | Login; response includes the assigned company identity | 
+| GET | `/api/auth/me` | Current authenticated admin/manager and company |
 | POST | `/api/auth/managers` | Create manager (admin only) |
 
 ## Employees
@@ -54,6 +55,12 @@ Query filters: `status`, `employee`, `project`.
 |---|---|---|
 | GET | `/api/dashboard/stats` | Dashboard statistics |
 | GET | `/api/dashboard/utilization` | Employee utilization |
+
+## Company isolation
+
+Every protected request derives `companyId` from the authenticated user record. Clients cannot select or override a company ID. Employees, projects, allocations, dashboard statistics, and AI recommendations are scoped to that company. Managers created by an admin inherit the same company.
+
+For local prototype setup, run `npm run seed:demo` to create three isolated demo workspaces and sample data. See the root README for the demo credentials.
 
 ## Authorization
 

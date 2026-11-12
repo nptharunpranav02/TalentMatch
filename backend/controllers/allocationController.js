@@ -36,7 +36,7 @@ const createAllocation = async (req, res) => {
             });
         }
 
-        const projectForDates = await Project.findById(project);
+        const projectForDates = await Project.findOne({ _id: project, companyId: req.companyId });
         if (!projectForDates) return res.status(404).json({ success: false, message: "Project not found" });
         const startDate = startInput || projectForDates.startDate;
         const endDate = endInput || projectForDates.endDate;
@@ -63,8 +63,8 @@ const createAllocation = async (req, res) => {
         let createdAllocation;
 
         await session.withTransaction(async () => {
-            const employeeRecord = await Employee.findById(employee).session(session);
-            const projectRecord = await Project.findById(project).session(session);
+            const employeeRecord = await Employee.findOne({ _id: employee, companyId: req.companyId }).session(session);
+            const projectRecord = await Project.findOne({ _id: project, companyId: req.companyId }).session(session);
 
             if (!employeeRecord || !projectRecord) {
                 const error = new Error("Employee or project not found");
@@ -98,6 +98,7 @@ const createAllocation = async (req, res) => {
             const capacity = await checkAllocationCapacity({
                 employeeId: employee,
                 projectId: project,
+                companyId: req.companyId,
                 startDate: start,
                 endDate: end,
                 percentage,
@@ -112,18 +113,19 @@ const createAllocation = async (req, res) => {
 
             // These writes serialize competing allocation operations.
             await Employee.updateOne(
-                { _id: employee },
+                { _id: employee, companyId: req.companyId },
                 { $inc: { allocationVersion: 1 } },
                 { session }
             );
 
             await Project.updateOne(
-                { _id: project },
+                { _id: project, companyId: req.companyId },
                 { $inc: { allocationVersion: 1 } },
                 { session }
             );
 
             const [allocation] = await Allocation.create([{
+                companyId: req.companyId,
                 employee,
                 project,
                 allocationPercentage: percentage,
@@ -160,7 +162,7 @@ const createAllocation = async (req, res) => {
 // GET ALL ALLOCATIONS
 const getAllAllocations = async (req, res) => {
     try {
-        const filter = {};
+        const filter = { companyId: req.companyId };
 
         if (req.query.status) filter.status = req.query.status;
         if (req.query.employee) filter.employee = req.query.employee;
@@ -197,7 +199,7 @@ const getAllocationById = async (req, res) => {
             });
         }
 
-        const allocation = await Allocation.findById(req.params.id)
+        const allocation = await Allocation.findOne({ _id: req.params.id, companyId: req.companyId })
             .populate("employee", "employeeId name email")
             .populate("project", "projectId projectName")
             .populate("requestedBy", "name email")
@@ -233,7 +235,7 @@ const approveAllocation = async (req, res) => {
             });
         }
 
-        const allocation = await Allocation.findById(req.params.id);
+        const allocation = await Allocation.findOne({ _id: req.params.id, companyId: req.companyId });
 
         if (!allocation) {
             return res.status(404).json({
@@ -251,6 +253,7 @@ const approveAllocation = async (req, res) => {
 
         // Recheck capacity at approval time
         const existing = await Allocation.find({
+            companyId: req.companyId,
             _id: { $ne: allocation._id },
             employee: allocation.employee,
             status: { $in: ["pending", "approved"] },
@@ -308,7 +311,7 @@ const rejectAllocation = async (req, res) => {
             });
         }
 
-        const allocation = await Allocation.findById(req.params.id);
+        const allocation = await Allocation.findOne({ _id: req.params.id, companyId: req.companyId });
 
         if (!allocation) {
             return res.status(404).json({
@@ -355,7 +358,7 @@ const cancelAllocation = async (req, res) => {
             });
         }
 
-        const allocation = await Allocation.findById(req.params.id);
+        const allocation = await Allocation.findOne({ _id: req.params.id, companyId: req.companyId });
 
         if (!allocation) {
             return res.status(404).json({

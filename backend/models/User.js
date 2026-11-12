@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema(
             select: false
         },
 
+        companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
+
         role: {
             type: String,
             enum: ["admin", "manager"],

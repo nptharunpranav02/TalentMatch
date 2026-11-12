@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { Users, Briefcase, GitPullRequest, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, Building2, Check, Sparkles } from "lucide-react";
+import { Users, Briefcase, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, Building2, Check, Sparkles } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
 
 export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette }) {
-  const { orgName, updateOrgName, currency, currencies, setCurrency } = useOrg();
+  const { orgName, currency, currencies, setCurrency } = useOrg();
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
-  const [showOrgEdit, setShowOrgEdit] = useState(false);
-  const [tempOrgName, setTempOrgName] = useState(orgName);
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -16,13 +14,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
     { id: "approvals", label: "Approvals", icon: CheckSquare, badge: pendingCount }
   ];
 
-  const handleSaveOrg = (e) => {
-    e.preventDefault();
-    if (tempOrgName.trim()) {
-      updateOrgName(tempOrgName.trim());
-      setShowOrgEdit(false);
-    }
-  };
+
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
@@ -51,35 +43,10 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
               </div>
             </div>
 
-            {/* Editable Organization Name Tag */}
-            <div className="hidden sm:flex items-center pl-3 border-l border-slate-200 text-xs">
-              {showOrgEdit ? (
-                <form onSubmit={handleSaveOrg} className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    value={tempOrgName}
-                    onChange={(e) => setTempOrgName(e.target.value)}
-                    className="px-2.5 py-1 border border-blue-500 rounded-lg text-xs text-slate-900 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
-                    placeholder="Enter company name..."
-                    autoFocus
-                  />
-                  <button type="submit" className="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs">
-                    Save
-                  </button>
-                  <button type="button" onClick={() => setShowOrgEdit(false)} className="text-slate-400 text-xs hover:text-slate-600 cursor-pointer">
-                    ✕
-                  </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setShowOrgEdit(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-medium cursor-pointer transition-colors"
-                  title="Click to rename organization"
-                >
-                  <Building2 className="h-3.5 w-3.5 text-blue-500" />
-                  <span className="max-w-[150px] truncate font-semibold text-slate-700">{orgName}</span>
-                </button>
-              )}
+            {/* Company identity is resolved from the authenticated admin account. */}
+            <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-slate-200 text-xs text-slate-600">
+              <Building2 className="h-3.5 w-3.5 text-blue-500" />
+              <span className="max-w-[190px] truncate font-semibold text-slate-700">{orgName}</span>
             </div>
           </div>
 

@@ -17,20 +17,21 @@ const getDashboardStats = async (req, res) => {
             approvedAllocations,
             rejectedAllocations
         ] = await Promise.all([
-            Employee.countDocuments(),
-            Employee.countDocuments({ availability: "available" }),
-            Employee.countDocuments({ availability: "unavailable" }),
-            Project.countDocuments(),
-            Project.countDocuments({ status: "active" }),
-            Project.countDocuments({ status: "planning" }),
-            Project.countDocuments({ status: "completed" }),
-            Allocation.countDocuments({ status: "pending" }),
-            Allocation.countDocuments({ status: "approved" }),
-            Allocation.countDocuments({ status: "rejected" })
+            Employee.countDocuments({ companyId: req.companyId }),
+            Employee.countDocuments({ companyId: req.companyId, availability: "available" }),
+            Employee.countDocuments({ companyId: req.companyId, availability: "unavailable" }),
+            Project.countDocuments({ companyId: req.companyId }),
+            Project.countDocuments({ companyId: req.companyId, status: "active" }),
+            Project.countDocuments({ companyId: req.companyId, status: "planning" }),
+            Project.countDocuments({ companyId: req.companyId, status: "completed" }),
+            Allocation.countDocuments({ companyId: req.companyId, status: "pending" }),
+            Allocation.countDocuments({ companyId: req.companyId, status: "approved" }),
+            Allocation.countDocuments({ companyId: req.companyId, status: "rejected" })
         ]);
 
         // Employees with at least one currently approved allocation
         const allocatedEmployeeIds = await Allocation.distinct("employee", {
+            companyId: req.companyId,
             status: "approved",
             startDate: { $lte: new Date() },
             endDate: { $gte: new Date() }
@@ -79,7 +80,7 @@ const getDashboardStats = async (req, res) => {
 // GET EMPLOYEE UTILIZATION
 const getEmployeeUtilization = async (req, res) => {
     try {
-        const employees = await Employee.find()
+        const employees = await Employee.find({ companyId: req.companyId })
             .select("employeeId name department designation");
 
         const now = new Date();
@@ -87,6 +88,7 @@ const getEmployeeUtilization = async (req, res) => {
         const utilization = await Promise.all(
             employees.map(async (employee) => {
                 const allocations = await Allocation.find({
+                    companyId: req.companyId,
                     employee: employee._id,
                     status: "approved",
                     startDate: { $lte: now },
