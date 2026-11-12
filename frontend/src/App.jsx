@@ -103,6 +103,7 @@ function LoginScreen({ onLogin }) {
 }
 
 function TalentMatchMain() {
+  const currentUser = getCurrentUser();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState({
     totalEmployees: 0,
@@ -191,6 +192,7 @@ function TalentMatchMain() {
         setActiveTab={setActiveTab}
         pendingCount={pendingApprovalsCount}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        currentUser={currentUser}
       />
 
       {/* Main Content Area */}

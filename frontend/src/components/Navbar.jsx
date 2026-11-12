@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Users, Briefcase, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, Building2, Check, Sparkles } from "lucide-react";
+import { Users, Briefcase, CheckSquare, LayoutGrid, Search, Globe, ChevronDown, Building2, Check, Sparkles, UserRound } from "lucide-react";
 import { useOrg } from "../context/OrgContext";
 
-export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette }) {
+export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCommandPalette, currentUser }) {
   const { orgName, currency, currencies, setCurrency } = useOrg();
   const [showCurrencyMenu, setShowCurrencyMenu] = useState(false);
 
@@ -22,8 +22,8 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Universal Workspace Indicator */}
           <div className="flex items-center gap-3">
-            <div 
-              className="flex items-center gap-2.5 cursor-pointer group" 
+            <div
+              className="flex items-center gap-2.5 cursor-pointer group"
               onClick={() => setActiveTab("dashboard")}
             >
               <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-md shadow-blue-200 relative">
@@ -73,18 +73,16 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
-                  }`}
+                  className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${isActive
+                    ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                    }`}
                 >
                   <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-slate-400"}`} />
                   <span className="hidden sm:inline">{item.label}</span>
                   {item.badge > 0 && (
-                    <span className={`ml-1 inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      isActive ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-800 border border-amber-300"
-                    }`}>
+                    <span className={`ml-1 inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isActive ? "bg-amber-400 text-amber-950" : "bg-amber-100 text-amber-800 border border-amber-300"
+                      }`}>
                       {item.badge}
                     </span>
                   )}
@@ -106,7 +104,7 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
             </button>
 
             {showCurrencyMenu && (
-              <div 
+              <div
                 className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs animate-in fade-in"
                 onClick={() => setShowCurrencyMenu(false)}
               >
@@ -127,6 +125,28 @@ export default function Navbar({ activeTab, setActiveTab, pendingCount, onOpenCo
                 ))}
               </div>
             )}
+          </div>
+          {/* Logged-in User Role Indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5
+  rounded-lg border border-slate-200 bg-white">
+
+            <div className="h-8 w-8 rounded-full bg-blue-100
+    flex items-center justify-center">
+              <UserRound className="h-4 w-4 text-blue-700" />
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-slate-800">
+                {currentUser?.name || currentUser?.email || "User"}
+              </span>
+
+              <span className={`text-[10px] font-black uppercase tracking-wider ${currentUser?.role === "admin"
+                  ? "text-emerald-600"
+                  : "text-blue-600"
+                }`}>
+                {currentUser?.role || "Unknown Role"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
