@@ -1,4 +1,5 @@
 
+const mongoose = require("mongoose");
 const Employee = require("../models/Employee");
 const Project = require("../models/Project");
 const Allocation = require("../models/Allocation");
@@ -14,7 +15,7 @@ exports.getRecommendations = async (req, res) => {
   try {
     const { projectId, weights: requestedWeights } = req.body || {};
 
-    if (!projectId || !require("mongoose").isValidObjectId(projectId)) {
+    if (!projectId || !mongoose.isValidObjectId(projectId)) {
       return res.status(400).json({
         success: false,
         message: "A valid projectId is required"
@@ -54,7 +55,7 @@ exports.getRecommendations = async (req, res) => {
       new Date(allocation.startDate) <= projectEnd &&
       new Date(allocation.endDate) >= projectStart;
 
-    // Calculate total committed capacity during this project's date range.
+    // Calculate committed capacity during the project period.
     const capacityMap = new Map();
 
     for (const allocation of allocations) {
@@ -77,7 +78,6 @@ exports.getRecommendations = async (req, res) => {
       return Math.max(0, 100 - Math.min(100, committed));
     };
 
-    // Include employees with any remaining capacity.
     const candidates = employees.filter(
       (employee) => remainingCapacity(employee._id) > 0
     );
@@ -85,9 +85,17 @@ exports.getRecommendations = async (req, res) => {
     if (!candidates.length) {
       return res.json({
         success: true,
-        recommendations: []
+        recommendations: [],
+        message: "No employees with remaining capacity were found."
       });
     }
+
+    console.log("AI matching:", {
+      companyId: String(req.companyId),
+      projectId: String(project._id),
+      employeeCount: employees.length,
+      candidateCount: candidates.length
+    });
 
     const pending = new Set(
       allocations
@@ -101,7 +109,7 @@ exports.getRecommendations = async (req, res) => {
 
     const aiUrl = (
       process.env.AI_ENGINE_URL || "http://127.0.0.1:8000"
-    ).replace(/\/$/, "");
+    ).replace(/\/+$/, "");
 
     const payload = {
       employees: candidates.map((employee) => {
@@ -147,25 +155,60 @@ exports.getRecommendations = async (req, res) => {
       response = await fetch(`${aiUrl}/api/v1/match`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Accept: "application/json"
         },
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(15000)
+        signal: AbortSignal.timeout(20000)
       });
     } catch (error) {
+      console.error("AI engine connection error:", error);
+
       return res.status(502).json({
         success: false,
-        message: "AI engine is unavailable.",
+        message: "Could not connect to the AI engine.",
         detail: error.message
       });
     }
 
-    const result = await response.json();
+    // Read the response safely instead of blindly parsing JSON.
+    const responseText = await response.text();
+
+    let result;
+
+    try {
+      result = JSON.parse(responseText);
+    } catch (error) {
+      console.error("AI engine returned non-JSON:", {
+        url: `${aiUrl}/api/v1/match`,
+        status: response.status,
+        contentType: response.headers.get("content-type"),
+        responsePreview: responseText.slice(0, 500)
+      });
+
+      return res.status(502).json({
+        success: false,
+        message: "AI engine returned an invalid response.",
+        aiStatus: response.status,
+        aiContentType: response.headers.get("content-type"),
+        aiResponse: responseText.slice(0, 300)
+      });
+    }
 
     if (!response.ok) {
-      return res.status(response.status).json({
+      console.error("AI engine error:", result);
+
+      return res.status(502).json({
         success: false,
-        message: result.detail || "AI matching failed"
+        message: result.detail || result.message || "AI matching failed",
+        aiStatus: response.status
+      });
+    }
+
+    if (!Array.isArray(result.recommendations)) {
+      return res.status(502).json({
+        success: false,
+        message: "AI engine response is missing the recommendations array."
       });
     }
 
@@ -173,7 +216,7 @@ exports.getRecommendations = async (req, res) => {
       candidates.map((employee) => [String(employee._id), employee])
     );
 
-    const recommendations = (result.recommendations || [])
+    const recommendations = result.recommendations
       .map((rec) => {
         const employee = employeeMap.get(String(rec.employee_id));
 
@@ -216,12 +259,16 @@ exports.getRecommendations = async (req, res) => {
       })
       .filter(Boolean);
 
+    console.log("AI recommendations returned:", recommendations.length);
+
     return res.json({
       success: true,
-      recommendations
+      recommendations,
+      totalCandidates: candidates.length
     });
+
   } catch (error) {
-    console.error("AI matching error:", error);
+    console.error("AI matching controller error:", error);
 
     return res.status(500).json({
       success: false,
