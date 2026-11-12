@@ -6,11 +6,7 @@ if (process.env.DNS_SERVERS) {
 const express = require("express");
 const cors = require("cors");
 
-app.use(cors({
-  origin: "https://talentmatch-t9xl.onrender.com",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const authRoutes = require("./routes/authRoutes");
@@ -21,6 +17,11 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
+app.use(cors({
+  origin: "https://talentmatch-t9xl.onrender.com",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
   .split(",").map((value) => value.trim()).filter(Boolean);
 app.use(cors({ origin: allowedOrigins, credentials: true }));
